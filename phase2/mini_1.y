@@ -1,15 +1,9 @@
 %{
+#define YY_NO_UNPUT
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
-  int yyerror(char* s);
-  int yylex(void);
 %}
-
-%union {
-  int int_val;
-  string* op_val;
-}
 
 
 %token id "IDENT"
@@ -22,7 +16,7 @@
 %token endl "END_LOCALS"
 %token beginb "BEGIN_BODY"
 %token endb "END_BODY"
-%token int "INTEGER"
+%token myint "INTEGER"
 %token array "ARRAY"
 %token of "OF"
 %token myif "IF"
@@ -38,17 +32,18 @@
 %token cont "CONTINUE"
 %token read "READ"
 %token write "WRITE"
-%token and "AND"
-%token or "OR"
-%token not "NOT"
-%token true "TRUE"
-%token false "FALSE"
+%token myand "AND"
+%token myor "OR"
+%token mynot "NOT"
+
+%token mytrue "TRUE"
+%token myfalse "FALSE"
 %token ret "RETURN"
 
 %token sub "SUB"
 %token add "ADD"
 %token mult "MULT"
-%token div "DIV"
+%token mydiv "DIV"
 %token mod "MOD"
 %token eq "EQ"
 %token neq "NEQ"
@@ -66,9 +61,6 @@
 %token comma "COMMA"
 %token assign "ASSIGN"
 
-
-
-
 %start Input
 
 %%  /*  Grammar rules and actions follow  */
@@ -81,7 +73,7 @@ Function:        func id semicolon beginp Declaration endp beginl Declaration en
 ;
 
 Declaration:     %empty
-                 | Declaration1 colon Declaration2 int semicolon Declaration
+                 | Declaration1 colon Declaration2 myint semicolon Declaration
 ;
 Declaration1:    id
                  | id comma Declaration1 
@@ -124,7 +116,7 @@ MultExp:         Term MultExp1
 ;
 MultExp1:        %empty
                  | mult Term MultExp1
-                 | div Term MultExp1
+                 | mydiv Term MultExp1
                  | mod Term MultExp1
 
 Term:            Term1
@@ -147,22 +139,22 @@ Term21:          %empty
 BoolExp:         RAExp BoolExp1
 ;
 BoolExp1:        %empty
-                 | or RAExp BoolExp1
+                 | myor RAExp BoolExp1
 
 RAExp:           RExp RAExp1
 ;
 RAExp1:          %empty
-                 | and RExp RAExp1
+                 | myand RExp RAExp1
 ;
 
 RExp:            RExp1 RExp2
 ;
 RExp1:           %empty
-                 | not
+                 | mynot
 ;
 RExp2:           Expression Comp Expression
-                 | true
-                 | false
+                 | mytrue
+                 | myfalse
                  | lparen BoolExp rparen
 ;
 
@@ -175,16 +167,14 @@ Comp:            eq
 ;
 %%
 
-int yyerror(string s) {
+		 
+int yyerror(char* s) {
   extern int yylineno;
-  extern int char* yytext;
+  extern char* yytext;
 
   printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, yylineno);
   exit(1);
 }
-
-int yyerror(char* s) {
-  return yyerror(string(s));
-}
+		 
 
  
