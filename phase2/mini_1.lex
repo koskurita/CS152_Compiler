@@ -1,6 +1,8 @@
 
 /* Include Stuff */
 %{
+  #include "mini_1.tab.h"
+  
   int lineNum = 1, lineCol = 0;
   static const char* reservedWords[] = {
     "function", "beginparams", "endparams", "beginlocals", "endlocals",
@@ -30,36 +32,35 @@ NEWLINE [\n]
 /* Define Rules */
 %%
 
-"-"       printf("SUB\n"); ++lineCol;
-"+"       printf("ADD\n"); ++lineCol;
-"*"       printf("MULT\n"); ++lineCol;
-"/"       printf("DIV\n"); ++lineCol;
-"%"       printf("MOD\n"); ++lineCol;
+"-"       return SUB; ++lineCol;
+"+"       return ADD; ++lineCol;
+"*"       return MULT; ++lineCol;
+"/"       return DIV; ++lineCol;
+"%"       return MOD; ++lineCol;
 
-"=="      printf("EQ\n"); lineCol += 2;
-"<>"      printf("NEQ\n"); lineCol += 2;
-"<"       printf("LT\n"); ++lineCol;
-">"       printf("GT\n"); ++lineCol;
-"<="      printf("LTE\n"); lineCol += 2;
-">="      printf("GTE\n"); lineCol += 2;
+"=="      return EQ; lineCol += 2;
+"<>"      return NEQ; lineCol += 2;
+"<"       return LT; ++lineCol;
+">"       return GT; ++lineCol;
+"<="      return LTE; lineCol += 2;
+">="      return GTE; lineCol += 2;
 
 {LETTER}({CHAR}*{ALPHANUMER}+)? {
   char reserved = 0;
   int i = 0;
-  for (; i < numReservedWords; ++i) {
-    if (strcmp(yytext, reservedWords[i]) == 0) {
-      printf("%s\n", reservedWordsMap[i]);
-      reserved = 1;
-    }
+  if (strcmp(yytext, "function") == 0) {
+    return FUNCTION;
+  } else if (strcmp(yytext, "beginparams") == 0) {
+    return BEGIN_PARAMS;
   }
-  if (reserved == 0) {
-    printf("IDENT %s\n", yytext);
+  else {
+    return ID;
   }
   lineCol += yyleng;
 	}
 
 {DIGIT}+ {
-  printf("NUMBER %s\n", yytext);
+  return NUMBER;
   lineCol += yyleng;
        }
 
@@ -75,14 +76,14 @@ NEWLINE [\n]
   exit(1);
 			   }
 
-";"       printf("SEMICOLON\n"); ++lineCol;
-":"       printf("COLON\n"); ++lineCol;
-","       printf("COMMA\n"); ++lineCol;
-"("       printf("L_PAREN\n"); ++lineCol;
-")"       printf("R_PAREN\n"); ++lineCol;
-"["       printf("L_SQUARE_BRACKET\n"); ++lineCol;
-"]"       printf("R_SQUARE_BRACKET\n"); ++lineCol;
-":="      printf("ASSIGN\n"); lineCol += 2;
+";"       return SEMICOLON; ++lineCol;
+":"       return COLON; ++lineCol;
+","       return COMMA; ++lineCol;
+"("       return L_PAREN; ++lineCol;
+")"       return R_PAREN; ++lineCol;
+"["       return L_SQUARE_BRACKET; ++lineCol;
+"]"       return R_SQUARE_BRACKET; ++lineCol;
+":="      return ASSIGN; lineCol += 2;
 
 "##".*{NEWLINE} lineCol = 0; ++lineNum;
 

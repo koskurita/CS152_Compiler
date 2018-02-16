@@ -6,118 +6,118 @@
 %}
 
 
-%token id "IDENT"
-%token num "NUMBER"
+%token ID
+%token NUMBER
 
-%token func "FUNCTION"
-%token beginp "BEGIN_PARAMS"
-%token endp "END_PARAMS"
-%token beginl "BEGIN_LOCALS"
-%token endl "END_LOCALS"
-%token beginb "BEGIN_BODY"
-%token endb "END_BODY"
-%token myint "INTEGER"
-%token array "ARRAY"
-%token of "OF"
-%token myif "IF"
-%token then "THEN"
-%token endif "ENDIF"
-%token myelse "ELSE"
-%token mywhile "WHILE"
-%token mydo "DO"
-%token foreach "FOREACH"
-%token in "IN"
-%token beginloop "BEGINLOOP"
-%token endloop "ENDLOOP"
-%token cont "CONTINUE"
-%token read "READ"
-%token write "WRITE"
-%token myand "AND"
-%token myor "OR"
-%token mynot "NOT"
+%token FUNCTION
+%token BEGIN_PARAMS
+%token END_PARAMS
+%token BEGIN_LOCALS
+%token END_LOCALS
+%token BEGIN_BODY
+%token END_BODY
+%token INTEGER
+%token ARRAY
+%token OF
+%token IF
+%token THEN
+%token ENDIF
+%token ELSE
+%token WHILE
+%token DO
+%token FOREACH
+%token IN
+%token BEGINLOOP
+%token ENDLOOP
+%token CONTINUE
+%token READ
+%token WRITE
+%token AND
+%token OR
+%token NOT
 
-%token mytrue "TRUE"
-%token myfalse "FALSE"
-%token ret "RETURN"
+%token TRUE
+%token FALSE
+%token RETURN
 
-%token sub "SUB"
-%token add "ADD"
-%token mult "MULT"
-%token mydiv "DIV"
-%token mod "MOD"
-%token eq "EQ"
-%token neq "NEQ"
-%token lt "LT"
-%token gt "GT"
-%token lte "LTE"
-%token gte "GTE"
+%token SUB
+%token ADD
+%token MULT
+%token DIV
+%token MOD
+%token EQ
+%token NEQ
+%token LT
+%token GT
+%token LTE
+%token GTE
 
-%token lparen "L_PAREN"
-%token rparen "R_PAREN"
-%token lsquare "L_SQUARE_BRACKET"
-%token rsquare "R_SQUARE_BRACKET"
-%token colon "COLON"
-%token semicolon "SEMICOLON"
-%token comma "COMMA"
-%token assign "ASSIGN"
+%token L_PAREN
+%token R_PAREN
+%token L_SQUARE_BRACKET
+%token R_SQUARE_BRACKET
+%token COLON
+%token SEMICOLON
+%token COMMA
+%token ASSIGN
 
 %start Input
 
 %%  /*  Grammar rules and actions follow  */
 
-Input:           %empty { printf("Input -> epsilon\n"); }
-| Function Input { printf("Input -> Function Input\n"); }
+Input:           Function { printf("Input -> Function Input\n"); }
 ;
 
-Function:        func id semicolon beginp Declaration endp beginl Declaration endl beginb Statement endb
+Function:        FUNCTION ID SEMICOLON BEGIN_PARAMS Declaration END_PARAMS
+BEGIN_LOCALS Declaration END_LOCALS BEGIN_BODY  Statement END_BODY
 ;
 
 Declaration:     %empty
-                 | Declaration1 colon Declaration2 myint semicolon Declaration
+                 | Declaration1 COLON Declaration2 INTEGER SEMICOLON Declaration
 ;
-Declaration1:    id
-                 | id comma Declaration1 
+Declaration1:    ID
+                 | ID COMMA Declaration1 
 ;
 Declaration2:    %empty
-                 | array lsquare num rsquare of
+                 | ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF
 ;
 
-Statement:       Statement1 semicolon Statement
-                 | Statement1 semicolon
+Statement:       Statement1 SEMICOLON Statement
+                 | Statement1 SEMICOLON
 ;
-Statement1:      Var assign Expression
-                 | myif BoolExp then Statement Statement2 endif
-                 | mywhile BoolExp beginloop Statement endloop
-                 | mydo beginloop Statement endloop mywhile BoolExp
-                 | foreach id in id beginloop Statement endloop
-                 | read Var1
-                 | write Var1
-                 | cont
-                 | ret Expression
+Statement1:      Var ASSIGN Expression
+                 | IF BoolExp THEN Statement Statement2 ENDIF
+                 | WHILE BoolExp BEGINLOOP Statement ENDLOOP
+                 | DO BEGINLOOP Statement ENDLOOP WHILE BoolExp
+                 | FOREACH ID IN ID BEGINLOOP Statement ENDLOOP
+                 | READ Var1
+                 | WRITE Var1
+                 | CONTINUE
+                 | RETURN Expression
 ;
 Statement2:      %empty
-                 | myelse Statement
+                 | ELSE Statement
 ;
 
-Var:             id
-                 | id lsquare Expression rsquare
+Var:             ID
+                 | ID L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 ;
 Var1:            Var
-                 | Var comma Var1
+                 | Var COMMA Var1
 ;
 
 Expression:      MultExp Expression1
 ;
 Expression1:     %empty
-                 | add MultExp Expression1
-                 | sub MultExp Expression1
+                 | ADD MultExp Expression1
+                 | SUB MultExp Expression1
 
 MultExp:         Term MultExp1
 ;
 MultExp1:        %empty
-                 | mult Term MultExp1
-                 | mydiv Term MultExp1
-                 | mod Term MultExp1
+                 | MULT Term MultExp1
+                 | DIV Term MultExp1
+                 | MOD Term MultExp1
 
 Term:            Term1
                  | Term2
@@ -125,45 +125,45 @@ Term:            Term1
 Term1:           Term11 Term12
 ;
 Term11:          %empty
-                 | sub
+                 | SUB
 ;
 Term12:          Var
-                 | num
-                 | lparen Expression rparen
+                 | NUMBER
+                 | L_PAREN Expression R_PAREN
 ;
-Term2:           id lparen Term21 rparen
+Term2:           ID L_PAREN Term21 R_PAREN
 ;
 Term21:          %empty
-                 | Expression comma Term21
+                 | Expression COMMA Term21
 
 BoolExp:         RAExp BoolExp1
 ;
 BoolExp1:        %empty
-                 | myor RAExp BoolExp1
+                 | OR RAExp BoolExp1
 
 RAExp:           RExp RAExp1
 ;
 RAExp1:          %empty
-                 | myand RExp RAExp1
+                 | AND RExp RAExp1
 ;
 
 RExp:            RExp1 RExp2
 ;
 RExp1:           %empty
-                 | mynot
+                 | NOT
 ;
 RExp2:           Expression Comp Expression
-                 | mytrue
-                 | myfalse
-                 | lparen BoolExp rparen
+                 | TRUE
+                 | FALSE
+                 | L_PAREN BoolExp R_PAREN
 ;
 
-Comp:            eq
-                 | neq
-                 | lt
-                 | gt
-                 | lte
-                 | gte
+Comp:            EQ
+                 | NEQ
+                 | LT
+                 | GT
+                 | LTE
+                 | GTE
 ;
 %%
 
