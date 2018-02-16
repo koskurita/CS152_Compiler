@@ -63,7 +63,7 @@ NEWLINE [\n]
   lineCol += yyleng;
        }
 
-{DIGIT_UNDERSCORE}+{CHAR}* {
+({DIGIT}+{LETTER_UNDERSCORE}{CHAR}*)|("_"{CHAR}+) {
   printf("Error at line %d, column %d: identifier \"%s\" must begin with a letter.\n",
 	 lineNum, lineCol, yytext);
   exit(1);
