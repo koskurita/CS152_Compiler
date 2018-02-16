@@ -97,26 +97,3 @@ NEWLINE [\n]
 
 %%
 
-int main(int argc, char* argv[]) {
-  if (argc == 2) {
-    yyin = fopen(argv[1], "r");
-    if (yyin == 0) {
-      printf("Error opening file: %s\n", argv[1]);
-      exit(1);
-    }
-  }
-  else {
-    yyin = stdin;
-  }
-
-  // Check that the table is even
-  if (numReservedWords != sizeof(reservedWordsMap) / sizeof(reservedWordsMap[0])) {
-    printf("Unaligned reserved words table!\n");
-    exit(1);
-  }
-
-  yylex();
-
-  
-  return 0;
-}
