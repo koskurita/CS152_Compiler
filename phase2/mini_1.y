@@ -65,8 +65,8 @@
 
 %%  /*  Grammar rules and actions follow  */
 
-Input:           %empty
-                 | Function Input
+Input:           %empty { printf("Input -> epsilon\n"); }
+| Function Input { printf("Input -> Function Input\n"); }
 ;
 
 Function:        func id semicolon beginp Declaration endp beginl Declaration endl beginb Statement endb
