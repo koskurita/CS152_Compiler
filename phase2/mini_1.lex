@@ -96,6 +96,7 @@ NEWLINE [\n]
 }
 
 %%
+int yyparse();
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {
@@ -115,8 +116,8 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  yylex();
-
+  //yylex();
+  yyparse();
   
   return 0;
 }
