@@ -68,8 +68,10 @@
 %start Program
 
 %%  /*  Grammar rules and actions follow  */
+
 Program :        %empty
-                 | Function Program 
+                 | Function Program
+;
 
 Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration END_PARAMS BEGIN_LOCALS Declaration END_LOCALS BEGIN_BODY Statement END_BODY
 {printf("Function -> FUNCTION IDENT SEMICOLON BEGINPARAMS Declaration ENDPARAMS BEGINLOCALS Declaration ENDLOCALS BEGINBODY Statement ENDBODY\n");}
@@ -81,6 +83,9 @@ Declaration:     Identifiers COLON INTEGER
 Declarations:    %empty
                  | Declaration SEMICOLON Declarations
 ;
+
+Identifiers:     IDENT
+                 | IDENT COMMA Identifiers
 
 Statement:       Statement SEMICOLON Statements
                  | Statement SEMICOLON
@@ -116,8 +121,14 @@ Expressions:     %empty
                  | Expression
 ;
 
+MultExp:         Term
+                 | Term MULT MultExp
+                 | Term DIV MultExp
+                 | Term MOD MultExp
+;
+
 UnaryMinus:      %empty
-                 | UNARYMINUS
+                 | SUB
 ;
 
 Term:            UnaryMinus Var
@@ -133,7 +144,7 @@ RAExp:           RExp
                  | RExp AND RAExp
 ;
 
-RExp:            not RExp1 
+RExp:            NOT RExp1 
                  | RExp1
 
 ;
