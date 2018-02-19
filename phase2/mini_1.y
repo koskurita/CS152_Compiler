@@ -65,34 +65,41 @@
 %token COMMA
 %left ASSIGN
 
-%start Input
+%start Function
 
 %%  /*  Grammar rules and actions follow  */
-Input:           Function { printf("Input -> Function Input\n"); }
-;
 
 Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration END_PARAMS
 BEGIN_LOCALS Declaration END_LOCALS BEGIN_BODY  Statement END_BODY
-{ printf("Function -> Function ident; beginparams Declaration endparams beginlocals Declaration endlocals beginbody Statement endbody\n"); }
+{printf("Function -> FUNCTION IDENT SEMICOLON BEGINPARAMS Declaration ENDPARAMS BEGINLOCALS Declaration ENDLOCALS BEGINBODY Statement ENDBODY\n"); }
 ;
 
 Declaration:     %empty
+{printf("Declaration -> epsilon\n");}
                  | Declaration1 COLON Declaration2 INTEGER SEMICOLON Declaration
+		 {printf("Declaration -> Declaration1 COLON Declaration2 INTEGER SEMICOLON Declaration\n");}
 ;
 Declaration1:    IDENT
-                 | IDENT COMMA Declaration1 
+{printf("Declaration1 -> IDENT\n");}
+                 | IDENT COMMA Declaration1
+		 {printf("Declaration1 -> IDENT COMMA Declaration1\n");}
 ;
 Declaration2:    %empty
+{printf("Declaration2 -> epsilon\n");}
                  | ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF
+		 {printf("Declaration2 -> ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF\n");}
 ;
 
 Statement:       Statement1 SEMICOLON Statement
+{printf("Statement -> Statement1 SEMICOLON Statement\n");}
                  | Statement1 SEMICOLON
 ;
 Statement1:      Var ASSIGN Expression
+{printf("Statement1 -> Var assign Expression\n");}
                  | IF BoolExp THEN Statement Statement2 ENDIF
                  | WHILE BoolExp BEGINLOOP Statement ENDLOOP
-                 | DO BEGINLOOP Statement ENDLOOP WHILE BoolExp
+| DO BEGINLOOP Statement ENDLOOP WHILE BoolExp
+{printf("Statement1 -> do beginloop Statement endloop while Bool-Expr\n");}
                  | FOREACH IDENT IN IDENT BEGINLOOP Statement ENDLOOP
                  | READ Var1
                  | WRITE Var1
@@ -103,11 +110,15 @@ Statement2:      %empty
                  | ELSE Statement
 ;
 
-Var:             IDENT
-                 | IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Var:             IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+{printf("Var -> ident l_square_bracket Expression r_square_bracket\n");}
+                 | IDENT
+		 {printf("Var -> ident\n");}
 ;
 Var1:            Var
+{printf("Var1 -> Var\n");}
                  | Var COMMA Var1
+		 {printf("Var1 -> Var comma Var1\n");}
 ;
 
 Expression:      MultExp Expression1

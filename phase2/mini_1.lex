@@ -63,6 +63,7 @@ NEWLINE [\n]
 "return"       return RETURN; lineCol += yyleng;
 
 {LETTER}({CHAR}*{ALPHANUMER}+)? {
+  yylval.ident_val = yytext;
   return IDENT;
   lineCol += yyleng;
 	}
