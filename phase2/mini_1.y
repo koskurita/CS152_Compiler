@@ -5,6 +5,11 @@
 
 %}
 
+%union{
+  char* ident_val;
+  int num_val;
+ }
+
 %start Program
 
 %token IDENT
