@@ -4,19 +4,11 @@
   #include "mini_1.tab.h"
   
   int lineNum = 1, lineCol = 0;
-  static const char* reservedWords[] = {
-    "function", "beginparams", "endparams", "beginlocals", "endlocals",
-    "beginbody", "endbody", "integer", "array", "of", "if", "then", "endif", 
-    "else", "while", "do", "foreach", "in", "beginloop", "endloop", "continue",
-    "read", "write", "and", "or", "not", "true", "false", "return" };
-
   static const char* reservedWordsMap[] = {
     "FUNCTION", "BEGIN_PARAMS", "END_PARAMS", "BEGIN_LOCALS", "END_LOCALS",
     "BEGIN_BODY", "END_BODY", "INTEGER", "ARRAY", "OF", "IF", "THEN", "ENDIF",
     "ELSE", "WHILE", "DO", "FOREACH", "IN", "BEGINLOOP", "ENDLOOP", "CONTINUE",
     "READ", "WRITE", "AND", "OR", "NOT", "TRUE", "FALSE", "RETURN"};
-  
-  const int numReservedWords = sizeof(reservedWords) / sizeof(reservedWords[0]);
 %}
 
 /* Define Patterns */
@@ -45,17 +37,39 @@ NEWLINE [\n]
 "<="      return LTE; lineCol += 2;
 ">="      return GTE; lineCol += 2;
 
+"function"     return FUNCTION; lineCol += yyleng; printf("haha\n");
+"beginparams"  return BEGIN_PARAMS; lineCol += yyleng;
+"endparams"    return END_PARAMS;  lineCol += yyleng;
+"beginlocals"  return BEGIN_LOCALS; lineCol += yyleng;
+"endlocals"    return END_LOCALS; lineCol += yyleng;
+"beginbody"    return BEGIN_BODY; lineCol += yyleng;
+"endbody"      return END_BODY; lineCol += yyleng;
+"integer"      return INTEGER; lineCol += yyleng;
+"array"        return ARRAY; lineCol += yyleng;
+"of"           return OF; lineCol += yyleng;
+"if"           return IF; lineCol += yyleng;
+"then"         return THEN; lineCol += yyleng;
+"endif"        return ENDIF; lineCol += yyleng;
+"else"         return ELSE; lineCol += yyleng;
+"while"        return WHILE; lineCol += yyleng;
+"do"           return DO; lineCol += yyleng;
+"foreach"      return FOREACH; lineCol += yyleng;
+"in"           return IN; lineCol += yyleng;
+"beginloop"    return BEGINLOOP; lineCol += yyleng;
+"endloop"      return ENDLOOP; lineCol += yyleng;
+"continue"     return CONTINUE; lineCol += yyleng;
+"read"         return READ; lineCol += yyleng;
+"write"        return WRITE; lineCol += yyleng;
+"and"          return AND; lineCol += yyleng;
+"or"           return OR; lineCol += yyleng;
+"not"          return NOT; lineCol += yyleng;
+"true"         return TRUE; lineCol += yyleng;
+"false"        return FALSE; lineCol += yyleng;
+"return"       return RETURN; lineCol += yyleng;
+
 {LETTER}({CHAR}*{ALPHANUMER}+)? {
-  char reserved = 0;
-  int i = 0;
-  if (strcmp(yytext, "function") == 0) {
-    return FUNCTION;
-  } else if (strcmp(yytext, "beginparams") == 0) {
-    return BEGIN_PARAMS;
-  }
-  else {
-    return ID;
-  }
+  printf("baba\n");
+  return IDENT;
   lineCol += yyleng;
 	}
 
@@ -109,12 +123,6 @@ int main(int argc, char* argv[]) {
   }
   else {
     yyin = stdin;
-  }
-
-  // Check that the table is even
-  if (numReservedWords != sizeof(reservedWordsMap) / sizeof(reservedWordsMap[0])) {
-    printf("Unaligned reserved words table!\n");
-    exit(1);
   }
 
   //yylex();

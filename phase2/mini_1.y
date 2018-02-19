@@ -6,7 +6,7 @@
 %}
 
 
-%token ID
+%token IDENT
 %token NUMBER
 
 %token FUNCTION
@@ -64,19 +64,19 @@
 %start Input
 
 %%  /*  Grammar rules and actions follow  */
-
 Input:           Function { printf("Input -> Function Input\n"); }
 ;
 
-Function:        FUNCTION ID SEMICOLON BEGIN_PARAMS Declaration END_PARAMS
+Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration END_PARAMS
 BEGIN_LOCALS Declaration END_LOCALS BEGIN_BODY  Statement END_BODY
+{ printf("Function -> Function ident; beginparams Declaration endparams beginlocals Declaration endlocals beginbody Statement endbody\n"); }
 ;
 
 Declaration:     %empty
                  | Declaration1 COLON Declaration2 INTEGER SEMICOLON Declaration
 ;
-Declaration1:    ID
-                 | ID COMMA Declaration1 
+Declaration1:    IDENT
+                 | IDENT COMMA Declaration1 
 ;
 Declaration2:    %empty
                  | ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF
@@ -89,7 +89,7 @@ Statement1:      Var ASSIGN Expression
                  | IF BoolExp THEN Statement Statement2 ENDIF
                  | WHILE BoolExp BEGINLOOP Statement ENDLOOP
                  | DO BEGINLOOP Statement ENDLOOP WHILE BoolExp
-                 | FOREACH ID IN ID BEGINLOOP Statement ENDLOOP
+                 | FOREACH IDENT IN IDENT BEGINLOOP Statement ENDLOOP
                  | READ Var1
                  | WRITE Var1
                  | CONTINUE
@@ -99,8 +99,8 @@ Statement2:      %empty
                  | ELSE Statement
 ;
 
-Var:             ID
-                 | ID L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+Var:             IDENT
+                 | IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 ;
 Var1:            Var
                  | Var COMMA Var1
@@ -131,7 +131,7 @@ Term12:          Var
                  | NUMBER
                  | L_PAREN Expression R_PAREN
 ;
-Term2:           ID L_PAREN Term21 R_PAREN
+Term2:           IDENT L_PAREN Term21 R_PAREN
 ;
 Term21:          %empty
                  | Expression COMMA Term21
