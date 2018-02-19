@@ -5,8 +5,12 @@
 
 %}
 
+%union {
+  char* ident_val;
+  int number_val;
+}
 
-%token IDENT
+%token <ident_val> IDENT
 %token NUMBER
 
 %token FUNCTION
@@ -169,10 +173,10 @@ Comp:            EQ
 
 		 
 int yyerror(char* s) {
-  extern int yylineno;
+  extern int lineNum;
   extern char* yytext;
 
-  printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, yylineno);
+  printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, lineNum);
   exit(1);
 }
 		 

@@ -4,11 +4,6 @@
   #include "mini_1.tab.h"
   
   int lineNum = 1, lineCol = 0;
-  static const char* reservedWordsMap[] = {
-    "FUNCTION", "BEGIN_PARAMS", "END_PARAMS", "BEGIN_LOCALS", "END_LOCALS",
-    "BEGIN_BODY", "END_BODY", "INTEGER", "ARRAY", "OF", "IF", "THEN", "ENDIF",
-    "ELSE", "WHILE", "DO", "FOREACH", "IN", "BEGINLOOP", "ENDLOOP", "CONTINUE",
-    "READ", "WRITE", "AND", "OR", "NOT", "TRUE", "FALSE", "RETURN"};
 %}
 
 /* Define Patterns */
@@ -37,7 +32,7 @@ NEWLINE [\n]
 "<="      return LTE; lineCol += 2;
 ">="      return GTE; lineCol += 2;
 
-"function"     return FUNCTION; lineCol += yyleng; printf("haha\n");
+"function"     return FUNCTION; lineCol += yyleng;
 "beginparams"  return BEGIN_PARAMS; lineCol += yyleng;
 "endparams"    return END_PARAMS;  lineCol += yyleng;
 "beginlocals"  return BEGIN_LOCALS; lineCol += yyleng;
@@ -68,7 +63,6 @@ NEWLINE [\n]
 "return"       return RETURN; lineCol += yyleng;
 
 {LETTER}({CHAR}*{ALPHANUMER}+)? {
-  printf("baba\n");
   return IDENT;
   lineCol += yyleng;
 	}
