@@ -70,69 +70,110 @@
 
 %%  /*  Grammar rules and actions follow  */
 
-Program:         Function
+Program:         %empty
+                 | Function Program
 ;
 
 Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
-
+{printf("Function -> FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");}
 ;
 
 Declaration:     Identifiers COLON INTEGER
+{printf("Declaration -> Identifiers COLON INTEGER\n");}
                  | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
+		 {printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER;\n");}
 ;
 Declarations:    %empty
+{printf("Declarations -> epsilon\n");}
                  | Declaration SEMICOLON Declarations
+		 {printf("Declarations -> Declaration SEMICOLON Declarations\n");}
 ;
 
 Identifiers:     IDENT
+{printf("Identifiers -> IDENT\n");}
                  | IDENT COMMA Identifiers
+		 {printf("Identifiers -> IDENT COMMA Identifiers\n");}
 
-Statements:       Statement SEMICOLON Statements
+Statements:      Statement SEMICOLON Statements
+{printf("Statements -> Statement SEMICOLON Statements\n");}
                  | Statement SEMICOLON
+		 {printf("Statements -> Statement SEMICOLON\n");}
 ;
 Statement:      Var ASSIGN Expression
+{printf("Statement -> Var ASSIGN Expression\n");}
                  | IF BoolExp THEN Statements ElseStatement ENDIF
+		 {printf("Statement -> IF BoolExp THEN Statements ElseStatment ENDIF\n");}		 
                  | WHILE BoolExp BEGINLOOP Statements ENDLOOP
+		 {printf("Statement -> WHILE BoolExp BEGINLOOP Statements ENDLOOP\n");}
                  | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
+		 {printf("Statement -> DO BEGINLOOP Statements ENDLOOP WHILE BoolExp\n");}
                  | FOREACH IDENT IN IDENT BEGINLOOP Statements ENDLOOP
+		 {printf("Statement -> FOREACH IDENT IN IDENT BEGINLOOP Statemens ENDLOOP\n");}
                  | READ Vars
+		 {printf("Statement -> READ Vars\n");}
                  | WRITE Vars
+		 {printf("Statement -> WRITE Vars\n");}
                  | CONTINUE
+		 {printf("Statement -> CONTINUE\n");}
                  | RETURN Expression
+		 {printf("Statement -> RETURN Expression\n");}
 ;
 ElseStatement:   %empty
+{printf("ElseStatement -> epsilon\n");}
                  | ELSE Statements
+		 {printf("ElseStatement -> ELSE Statements\n");}
 ;
 
 Var:             IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+{printf("Var -> IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET\n");}
                  | IDENT
+		 {printf("Var -> IDENT\n");}
 ;
 Vars:            Var
+{printf("Vars -> Var\n");}
                  | Var COMMA Vars
+		 {printf("Vars -> Var COMMA Vars\n");}
 ;
 
 Expression:      MultExp
+{printf("Expression -> MultExp\n");}
                  | MultExp ADD Expression
+		 {printf("Expression -> MultExp ADD Expression\n");}
                  | MultExp SUB Expression
+		 {printf("Expression -> MultExp SUB Expression\n");}
 ;
 Expressions:     %empty
+{printf("Expressions -> epsilon\n");}
                  | Expression COMMA Expressions
+		 {printf("Expressions -> Expression COMMA Expressions\n");}
                  | Expression
+		 {printf("Expressions -> Expression\n");}
 ;
 
 MultExp:         Term
+{printf("MultExp -> Term\n");}
                  | Term MULT MultExp
+		 {printf("MultExp -> Term MULT MultExp\n");}
                  | Term DIV MultExp
+		 {printf("MultExp -> Term DIV MultExp\n");}
                  | Term MOD MultExp
+		 {printf("MultExp -> Term MOD MultExp\n");}
 ;
 
 Term:            Var
+{printf("Term -> Var\n");}
                  | SUB Var
+		 {printf("Term -> SUB Var\n");}
                  | NUMBER
+		 {printf("Term -> NUMBER\n");}
                  | SUB NUMBER
+		 {printf("Term -> SUB NUMBER\n");}
                  | L_PAREN Expression R_PAREN
+		 {printf("Term -> L_PAREN Expression R_PAREN\n");}
                  | SUB L_PAREN Expression R_PAREN
+		 {printf("Term -> SUB L_PAREN Expression R_PAREN\n");}
                  | IDENT L_PAREN Expressions R_PAREN
+		 {printf("Term -> IDENT L_PAREN Expressions R_PAREN\n");}
 ;
 
 BoolExp:         RAExp 
