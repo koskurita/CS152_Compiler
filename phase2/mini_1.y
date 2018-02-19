@@ -12,8 +12,8 @@
 
 %start Program
 
-%token IDENT
-%token NUMBER
+%token <ident_val> IDENT
+%token <num_val> NUMBER
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -74,14 +74,14 @@ Program:         %empty
                  | Function Program
 ;
 
-Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
-{printf("Function -> FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");}
+Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+{printf("Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");}
 ;
 
 Declaration:     Identifiers COLON INTEGER
 {printf("Declaration -> Identifiers COLON INTEGER\n");}
                  | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
-		 {printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER;\n");}
+		 {printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER;\n", $5);}
 ;
 Declarations:    %empty
 {printf("Declarations -> epsilon\n");}
@@ -89,10 +89,10 @@ Declarations:    %empty
 		 {printf("Declarations -> Declaration SEMICOLON Declarations\n");}
 ;
 
-Identifiers:     IDENT
-{printf("Identifiers -> IDENT\n");}
-                 | IDENT COMMA Identifiers
-		 {printf("Identifiers -> IDENT COMMA Identifiers\n");}
+Identifiers:     Ident
+{printf("Identifiers -> Ident \n");}
+                 | Ident COMMA Identifiers
+		 {printf("Identifiers -> Ident COMMA Identifiers\n");}
 
 Statements:      Statement SEMICOLON Statements
 {printf("Statements -> Statement SEMICOLON Statements\n");}
@@ -107,8 +107,8 @@ Statement:      Var ASSIGN Expression
 		 {printf("Statement -> WHILE BoolExp BEGINLOOP Statements ENDLOOP\n");}
                  | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
 		 {printf("Statement -> DO BEGINLOOP Statements ENDLOOP WHILE BoolExp\n");}
-                 | FOREACH IDENT IN IDENT BEGINLOOP Statements ENDLOOP
-		 {printf("Statement -> FOREACH IDENT IN IDENT BEGINLOOP Statemens ENDLOOP\n");}
+                 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
+		 {printf("Statement -> FOREACH Ident IN Ident BEGINLOOP Statemens ENDLOOP\n");}
                  | READ Vars
 		 {printf("Statement -> READ Vars\n");}
                  | WRITE Vars
@@ -124,10 +124,10 @@ ElseStatement:   %empty
 		 {printf("ElseStatement -> ELSE Statements\n");}
 ;
 
-Var:             IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
-{printf("Var -> IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET\n");}
-                 | IDENT
-		 {printf("Var -> IDENT\n");}
+Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
+{printf("Var -> Ident  L_SQUARE_BRACKET Expression R_SQUARE_BRACKET\n");}
+                 | Ident
+		 {printf("Var -> Ident \n");}
 ;
 Vars:            Var
 {printf("Vars -> Var\n");}
@@ -165,15 +165,15 @@ Term:            Var
                  | SUB Var
 		 {printf("Term -> SUB Var\n");}
                  | NUMBER
-		 {printf("Term -> NUMBER\n");}
+		 {printf("Term -> NUMBER %d\n", $1);}
                  | SUB NUMBER
-		 {printf("Term -> SUB NUMBER\n");}
+		 {printf("Term -> SUB NUMBER %d\n", $2);}
                  | L_PAREN Expression R_PAREN
 		 {printf("Term -> L_PAREN Expression R_PAREN\n");}
                  | SUB L_PAREN Expression R_PAREN
 		 {printf("Term -> SUB L_PAREN Expression R_PAREN\n");}
-                 | IDENT L_PAREN Expressions R_PAREN
-		 {printf("Term -> IDENT L_PAREN Expressions R_PAREN\n");}
+                 | Ident L_PAREN Expressions R_PAREN
+		 {printf("Term -> Ident L_PAREN Expressions R_PAREN\n");}
 ;
 
 BoolExp:         RAExp 
@@ -218,6 +218,8 @@ Comp:            EQ
                  {printf("comp -> GTE\n");}
 ;
 
+Ident:      IDENT
+{printf("Ident -> IDENT %s \n", $1);}
 %%
 
 		 

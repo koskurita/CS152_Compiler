@@ -69,6 +69,7 @@ NEWLINE [\n]
 	}
 
 {DIGIT}+ {
+  yylval.num_val = atoi(yytext);
   return NUMBER;
   lineCol += yyleng;
        }
