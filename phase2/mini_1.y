@@ -126,48 +126,37 @@ Expression:      MultExp Expression1
 Expression1:     %empty
                  | ADD MultExp Expression1
                  | SUB MultExp Expression1
-
+;
 MultExp:         Term MultExp1
 ;
 MultExp1:        %empty
                  | MULT Term MultExp1
                  | DIV Term MultExp1
                  | MOD Term MultExp1
-
-Term:            Term1
-                 | Term2
-;
-Term1:           Term11 Term12
-;
-Term11:          %empty
-                 | SUB
-;
-Term12:          Var
-                 | NUMBER
-                 | L_PAREN Expression R_PAREN
-;
-Term2:           IDENT L_PAREN Term21 R_PAREN
-;
-Term21:          %empty
-                 | Expression COMMA Term21
-
-BoolExp:         RAExp BoolExp1
-;
-BoolExp1:        %empty
-                 | OR RAExp BoolExp1
-
-RAExp:           RExp RAExp1
-;
-RAExp1:          %empty
-                 | AND RExp RAExp1
 ;
 
-RExp:            RExp1 RExp2
+UnaryMinus:      %empty
+                 | UNARYMINUS
 ;
-RExp1:           %empty
-                 | NOT
+
+Term:            UnaryMinus Var
+                 | UnaryMinus NUMBER
+                 | UnaryMinus L_PAREN Expression R_PAREN
+                 | IDENT L_PAREN Expressions R_PAREN
 ;
-RExp2:           Expression Comp Expression
+
+BoolExp:         RAExp 
+                 | RAExp OR BoolExp
+;
+RAExp:           RExp
+                 | RExp AND RAExp
+;
+
+RExp:            not RExp1 
+                 | RExp1
+
+;
+RExp1:           Expression Comp Expression
                  | TRUE
                  | FALSE
                  | L_PAREN BoolExp R_PAREN
