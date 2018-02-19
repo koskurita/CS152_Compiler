@@ -121,13 +121,12 @@ MultExp:         Term
                  | Term MOD MultExp
 ;
 
-UnaryMinus:      %empty
-                 | SUB
-;
-
-Term:            UnaryMinus Var
-                 | UnaryMinus NUMBER
-                 | UnaryMinus L_PAREN Expression R_PAREN
+Term:            Var
+                 | SUB Var
+                 | NUMBER
+                 | SUB NUMBER
+                 | L_PAREN Expression R_PAREN
+                 | SUB L_PAREN Expression R_PAREN
                  | IDENT L_PAREN Expressions R_PAREN
 ;
 
