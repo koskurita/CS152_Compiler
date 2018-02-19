@@ -195,13 +195,13 @@ RExp:            NOT RExp1
 
 ;
 RExp1:           Expression Comp Expression
-{printf("relation_exp -> Expression Comp Expression\n");
+{printf("relation_exp -> Expression Comp Expression\n");}
                  | TRUE
-                 {printf("relation_exp -> TRUE\n");
+		     {printf("relation_exp -> TRUE\n");}
                  | FALSE
-                 {printf("relation_exp -> FALSE\n");
+		     {printf("relation_exp -> FALSE\n");}
                  | L_PAREN BoolExp R_PAREN
-                 {printf("relation_exp -> L_PAREN BoolExp R_PAREN\n");
+		   {printf("relation_exp -> L_PAREN BoolExp R_PAREN\n");}
 ;
 
 Comp:            EQ
