@@ -177,28 +177,45 @@ Term:            Var
 ;
 
 BoolExp:         RAExp 
+{printf("bool_exp -> relation_exp\n");}
                  | RAExp OR BoolExp
+                 {printf("bool_exp -> relation_and_exp OR bool_exp\n");}
 ;
+
 RAExp:           RExp
+{printf("relation_and_exp -> relation_exp\n");}
                  | RExp AND RAExp
+                 {printf("relation_and_exp -> relation_exp AND relation_and_exp\n");}
 ;
 
 RExp:            NOT RExp1 
+{printf("relation_exp -> NOT relation_exp1\n");}
                  | RExp1
+                 {printf("relation_exp -> relation_exp1\n");}
 
 ;
 RExp1:           Expression Comp Expression
+{printf("relation_exp -> Expression Comp Expression\n");
                  | TRUE
+                 {printf("relation_exp -> TRUE\n");
                  | FALSE
+                 {printf("relation_exp -> FALSE\n");
                  | L_PAREN BoolExp R_PAREN
+                 {printf("relation_exp -> L_PAREN BoolExp R_PAREN\n");
 ;
 
 Comp:            EQ
+{printf("comp -> EQ\n");}
                  | NEQ
+                 {printf("comp -> NEQ\n");}
                  | LT
+                 {printf("comp -> LT\n");}
                  | GT
+                 {printf("comp -> GT\n");}
                  | LTE
+                 {printf("comp -> LTE\n");}
                  | GTE
+                 {printf("comp -> GTE\n");}
 ;
 
 %%
