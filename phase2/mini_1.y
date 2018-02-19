@@ -32,25 +32,25 @@
 %token CONTINUE
 %token READ
 %token WRITE
-%token AND
-%token OR
-%token NOT
+%left AND
+%left OR
+%right NOT
 
 %token TRUE
 %token FALSE
 %token RETURN
 
-%token SUB
-%token ADD
-%token MULT
-%token DIV
-%token MOD
-%token EQ
-%token NEQ
-%token LT
-%token GT
-%token LTE
-%token GTE
+%left SUB
+%left ADD
+%left MULT
+%left DIV
+%left MOD
+%left EQ
+%left NEQ
+%left LT
+%left GT
+%left LTE
+%left GTE
 
 %token L_PAREN
 %token R_PAREN
@@ -59,7 +59,7 @@
 %token COLON
 %token SEMICOLON
 %token COMMA
-%token ASSIGN
+%left ASSIGN
 
 %start Input
 
