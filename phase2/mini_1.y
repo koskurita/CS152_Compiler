@@ -5,12 +5,9 @@
 
 %}
 
-%union {
-  char* ident_val;
-  int number_val;
-}
+%start Program
 
-%token <ident_val> IDENT
+%token IDENT
 %token NUMBER
 
 %token FUNCTION
@@ -65,16 +62,14 @@
 %token COMMA
 %left ASSIGN
 
-%start Program
 
 %%  /*  Grammar rules and actions follow  */
 
-Program :        %empty
-                 | Function Program
+Program:         Function
 ;
 
-Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declaration END_PARAMS BEGIN_LOCALS Declaration END_LOCALS BEGIN_BODY Statement END_BODY
-{printf("Function -> FUNCTION IDENT SEMICOLON BEGINPARAMS Declaration ENDPARAMS BEGINLOCALS Declaration ENDLOCALS BEGINBODY Statement ENDBODY\n");}
+Function:        FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+
 ;
 
 Declaration:     Identifiers COLON INTEGER
@@ -87,11 +82,10 @@ Declarations:    %empty
 Identifiers:     IDENT
                  | IDENT COMMA Identifiers
 
-Statement:       Statement SEMICOLON Statements
+Statements:       Statement SEMICOLON Statements
                  | Statement SEMICOLON
 ;
-Statements:      Var ASSIGN Expression
-{printf("Statement1 -> Var assign Expression\n");}
+Statement:      Var ASSIGN Expression
                  | IF BoolExp THEN Statements ElseStatement ENDIF
                  | WHILE BoolExp BEGINLOOP Statements ENDLOOP
                  | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
@@ -161,6 +155,7 @@ Comp:            EQ
                  | LTE
                  | GTE
 ;
+
 %%
 
 		 
