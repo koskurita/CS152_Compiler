@@ -2,7 +2,7 @@
 #define YY_NO_UNPUT
 #include <stdio.h>
 #include <stdlib.h>
-
+void yyerror(const char* s);
 %}
 
 %union{
@@ -10,6 +10,7 @@
   int num_val;
  }
 
+%error-verbose
 %start Program
 
 %token <ident_val> IDENT
@@ -225,7 +226,7 @@ Ident:      IDENT
 %%
 
 		 
-int yyerror(char* s) {
+void yyerror(const char* s) {
   extern int lineNum;
   extern char* yytext;
 
