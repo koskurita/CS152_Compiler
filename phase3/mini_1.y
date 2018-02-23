@@ -71,6 +71,7 @@
 %token RETURN
 
 %left SUB
+%right UMI
 %left ADD
 %left MULT
 %left DIV
@@ -194,15 +195,15 @@ MultExp:         Term
 Term:            Var
 {printf("Term -> Var\n");}
                  | SUB Var
-		 {printf("Term -> SUB Var\n");}
+		 {printf("Term -> UMI Var\n");}
                  | NUMBER
 		 {printf("Term -> NUMBER %d\n", $1);}
                  | SUB NUMBER
-		 {printf("Term -> SUB NUMBER %d\n", $2);}
+		 {printf("Term -> UMI NUMBER %d\n", $2);}
                  | L_PAREN Expression R_PAREN
 		 {printf("Term -> L_PAREN Expression R_PAREN\n");}
                  | SUB L_PAREN Expression R_PAREN
-		 {printf("Term -> SUB L_PAREN Expression R_PAREN\n");}
+		 {printf("Term -> UMI L_PAREN Expression R_PAREN\n");}
                  | Ident L_PAREN Expressions R_PAREN
 		 {printf("Term -> Ident L_PAREN Expressions R_PAREN\n");}
 ;
