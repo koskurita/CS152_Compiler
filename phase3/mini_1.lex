@@ -6,9 +6,6 @@
   int lineNum = 1, lineCol = 0;
 %}
 
-%option noyywrap
-%option c++
-
 /* Define Patterns */
 DIGIT [0-9]
 DIGIT_UNDERSCORE [0-9_]
@@ -111,6 +108,7 @@ NEWLINE [\n]
 
 %%
 int yyparse();
+int yylex();
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {

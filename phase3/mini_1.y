@@ -1,32 +1,12 @@
 %{
+#define YY_NO_UNPUT
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
-#include <string>
+void yyerror(const char* s);
+ int yylex();
 
-  int yyerror(char* error);
-  int yylex();
-  char* yytext;
-  FILE* yyin;
-
-  extern int lineNum;
-  extern int lineCol;
-  /*
-  enum Operator {
-
-  }
-  typedef void* OPERAND; //TODO
-
-  struct quadruple {
-    Operator op;
-    OPERAND operand1;
-    OPERAND operand2;
-    // dest;
-  };
-  */
-
-  std::map<std::string, int*> variables;
-
+ std::map<int, int> test;
 %}
 
 %union{
@@ -34,6 +14,7 @@
   int num_val;
  }
 
+%error-verbose
 %start Program
 
 %token <ident_val> IDENT
@@ -94,19 +75,14 @@
 
 %%  /*  Grammar rules and actions follow  */
 
-Program:
-%empty
-| Function Program
-{
-  printf("endfunc\n");
-}
+Program:         %empty
+{printf("Program -> epsilon\n");}
+                 | Function Program
+		 {printf("Program -> Function Program\n");}
 ;
 
-Function:
-FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
-{
-  
-}
+Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+{printf("Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");}
 ;
 
 Declaration:     Identifiers COLON INTEGER
@@ -254,7 +230,9 @@ Ident:      IDENT
 %%
 
 		 
-int yyerror(char* s) {
+void yyerror(const char* s) {
+  extern int lineNum;
+  extern char* yytext;
 
   printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, lineNum);
   exit(1);
