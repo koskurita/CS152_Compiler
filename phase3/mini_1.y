@@ -3,10 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
+#include <string>
 void yyerror(const char* s);
  int yylex();
 
- std::map<int, int> test;
+ std::map<std::string, int> variables;
 %}
 
 %union{
@@ -19,6 +20,8 @@ void yyerror(const char* s);
 
 %token <ident_val> IDENT
 %token <num_val> NUMBER
+
+%type <ident_val> Ident
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -74,33 +77,75 @@ void yyerror(const char* s);
 %left ASSIGN
 
 
+
+
 %%  /*  Grammar rules and actions follow  */
 
 Program:         %empty
-{printf("Program -> epsilon\n");}
-                 | Function Program
-		 {printf("Program -> Function Program\n");}
+{
+  printf("Program -> epsilon\n");
+}
+| Function Program
+{
+  printf("Program -> Function Program\n");
+}
 ;
 
 Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
-{printf("Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");}
+{
+  printf("Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");
+}
 ;
 
 Declaration:     Identifiers COLON INTEGER
-{printf("Declaration -> Identifiers COLON INTEGER\n");}
-                 | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
-		 {printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER;\n", $5);}
-;
-Declarations:    %empty
-{printf("Declarations -> epsilon\n");}
-                 | Declaration SEMICOLON Declarations
-		 {printf("Declarations -> Declaration SEMICOLON Declarations\n");}
+{
+  printf("Declaration -> Identifiers COLON INTEGER\n");
+  
+
+}
+| Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
+{
+  printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER;\n", $5);
+}
 ;
 
+Declarations:    %empty
+{
+  printf("Declarations -> epsilon\n");
+}
+| Declaration SEMICOLON Declarations
+{
+  printf("Declarations -> Declaration SEMICOLON Declarations\n");
+}
+;
+
+/* Identifiers is only used by declaration; so it idents in it are
+ * declarations
+ */
 Identifiers:     Ident
-{printf("Identifiers -> Ident \n");}
-                 | Ident COMMA Identifiers
-		 {printf("Identifiers -> Ident COMMA Identifiers\n");}
+{
+  printf("Identifiers -> Ident \n");
+  if (variables.find($1) != variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Redeclaration of variable %s", $1);
+    yyerror(temp);
+  }
+  else {
+    variables.insert(std::pair<std::string,int>($1,0));
+  }
+}
+| Ident COMMA Identifiers
+{
+  printf("Identifiers -> Ident COMMA Identifiers\n");
+  if (variables.find($1) != variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Redeclaration of variable %s", $1);
+    yyerror(temp);
+  }
+  else {
+    variables.insert(std::pair<std::string,int>($1,0));
+  }
+}
 
 Statements:      Statement SEMICOLON Statements
 {printf("Statements -> Statement SEMICOLON Statements\n");}
@@ -227,7 +272,10 @@ Comp:            EQ
 ;
 
 Ident:      IDENT
-{printf("Ident -> IDENT %s \n", $1);}
+{
+  printf("Ident -> IDENT %s \n", $1);
+  $$ = $1;
+}
 %%
 
 		 
@@ -236,7 +284,6 @@ void yyerror(const char* s) {
   extern char* yytext;
 
   printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, lineNum);
-  exit(1);
 }
 		 
 
