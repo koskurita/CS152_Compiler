@@ -125,6 +125,8 @@ Declarations:    %empty
 Identifiers:     Ident
 {
   printf("Identifiers -> Ident \n");
+  
+  // Check for redeclaraion
   if (variables.find($1) != variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Redeclaration of variable %s", $1);
@@ -137,6 +139,8 @@ Identifiers:     Ident
 | Ident COMMA Identifiers
 {
   printf("Identifiers -> Ident COMMA Identifiers\n");
+  
+  // Check for redeclaration
   if (variables.find($1) != variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Redeclaration of variable %s", $1);
@@ -171,22 +175,55 @@ Statement:      Var ASSIGN Expression
                  | RETURN Expression
 		 {printf("Statement -> RETURN Expression\n");}
 ;
+
 ElseStatement:   %empty
-{printf("ElseStatement -> epsilon\n");}
-                 | ELSE Statements
-		 {printf("ElseStatement -> ELSE Statements\n");}
-;
+{
+  printf("ElseStatement -> epsilon\n");
+}
+| ELSE Statements
+{
+  printf("ElseStatement -> ELSE Statements\n");
+};
 
 Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
-{printf("Var -> Ident  L_SQUARE_BRACKET Expression R_SQUARE_BRACKET\n");}
-                 | Ident
-		 {printf("Var -> Ident \n");}
-;
+{
+  printf("Var -> Ident  L_SQUARE_BRACKET Expression R_SQUARE_BRACKET\n");
+
+  // Check for use of undeclared variable
+  if (variables.find($1) == variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Use of undeclared variable %s", $1);
+    yyerror(temp);
+  }
+  else {
+    // TODO
+    //    variables.insert(std::pair<std::string,int>($1,0));
+  }
+}
+| Ident
+{
+  printf("Var -> Ident \n");
+  if (variables.find($1) == variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Use of undeclared variable %s", $1);
+    yyerror(temp);
+  }
+  else {
+    // TODO
+    //    variables.insert(std::pair<std::string,int>($1,0));
+  }
+};
+
 Vars:            Var
-{printf("Vars -> Var\n");}
-                 | Var COMMA Vars
-		 {printf("Vars -> Var COMMA Vars\n");}
-;
+{
+  printf("Vars -> Var\n");
+}
+| Var COMMA Vars
+{
+  printf("Vars -> Var COMMA Vars\n");
+};
+
+
 
 Expression:      MultExp
 {printf("Expression -> MultExp\n");}

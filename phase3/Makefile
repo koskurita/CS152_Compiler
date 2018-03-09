@@ -7,4 +7,4 @@ minil: mini_1.lex mini_1.y
 	rm -f lex.yy.c
 
 clean:
-	rm -f minil mini_1.tab.* mini_1.output *~ lex.yy.c 
+	rm -f minil mini_1.tab.* mini_1.output *~ lex.yy.c ./tests/*~
