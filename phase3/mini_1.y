@@ -4,10 +4,27 @@
 #include <stdlib.h>
 #include <map>
 #include <string>
-void yyerror(const char* s);
- int yylex();
+#include <string.h>
+  void yyerror(const char* s);
+  int yylex();
+  std::string newTemp();
+
 
  std::map<std::string, int> variables;
+ std::map<std::string, int> functions;
+
+ struct Quadruple {
+   std::string op, src1, src2, dest;
+ };
+
+ struct Expr {
+   std::string place, code;
+ };
+
+ struct State {
+   std::string begin, after, code;
+ };
+ 
 %}
 
 %union{
@@ -76,9 +93,6 @@ void yyerror(const char* s);
 %token COMMA
 %left ASSIGN
 
-
-
-
 %%  /*  Grammar rules and actions follow  */
 
 Program:         %empty
@@ -88,20 +102,26 @@ Program:         %empty
 | Function Program
 {
   printf("Program -> Function Program\n");
-}
-;
+};
 
 Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
 {
   printf("Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");
-}
-;
+  
+  if (functions.find($2) != functions.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Redeclaration of function %s", $2);
+    yyerror(temp);
+  }
+  else {
+    functions.insert(std::pair<std::string,int>($2,0));
+  }
+};
+
 
 Declaration:     Identifiers COLON INTEGER
 {
   printf("Declaration -> Identifiers COLON INTEGER\n");
-  
-
 }
 | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
 {
@@ -148,6 +168,7 @@ Identifiers:     Ident
   }
   else {
     variables.insert(std::pair<std::string,int>($1,0));
+    printf("adding %s\n", $1);
   }
 }
 
@@ -156,25 +177,44 @@ Statements:      Statement SEMICOLON Statements
                  | Statement SEMICOLON
 		 {printf("Statements -> Statement SEMICOLON\n");}
 ;
+
 Statement:      Var ASSIGN Expression
-{printf("Statement -> Var ASSIGN Expression\n");}
-                 | IF BoolExp THEN Statements ElseStatement ENDIF
-		 {printf("Statement -> IF BoolExp THEN Statements ElseStatement ENDIF\n");}		 
-                 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
-		 {printf("Statement -> WHILE BoolExp BEGINLOOP Statements ENDLOOP\n");}
-                 | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
-		 {printf("Statement -> DO BEGINLOOP Statements ENDLOOP WHILE BoolExp\n");}
-                 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
-		 {printf("Statement -> FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP\n");}
-                 | READ Vars
-		 {printf("Statement -> READ Vars\n");}
-                 | WRITE Vars
-		 {printf("Statement -> WRITE Vars\n");}
-                 | CONTINUE
-		 {printf("Statement -> CONTINUE\n");}
-                 | RETURN Expression
-		 {printf("Statement -> RETURN Expression\n");}
-;
+{
+  printf("Statement -> Var ASSIGN Expression\n");
+}
+| IF BoolExp THEN Statements ElseStatement ENDIF
+{
+  printf("Statement -> IF BoolExp THEN Statements ElseStatement ENDIF\n");
+}		 
+| WHILE BoolExp BEGINLOOP Statements ENDLOOP
+{
+  printf("Statement -> WHILE BoolExp BEGINLOOP Statements ENDLOOP\n");
+}
+| DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
+{
+  printf("Statement -> DO BEGINLOOP Statements ENDLOOP WHILE BoolExp\n");
+}
+| FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
+{
+  printf("Statement -> FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP\n");
+}
+| READ Vars
+{
+  printf("Statement -> READ Vars\n");
+}
+| WRITE Vars
+{
+  printf("Statement -> WRITE Vars\n");
+}
+| CONTINUE
+{
+  printf("Statement -> CONTINUE\n");
+}
+| RETURN Expression
+{
+  printf("Statement -> RETURN Expression\n");
+};
+
 
 ElseStatement:   %empty
 {
@@ -203,6 +243,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 | Ident
 {
   printf("Var -> Ident \n");
+  printf("checking %s\n", $1);
   if (variables.find($1) == variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared variable %s", $1);
@@ -252,18 +293,30 @@ MultExp:         Term
 
 Term:            Var
 {printf("Term -> Var\n");}
-                 | SUB Var
-		 {printf("Term -> UMI Var\n");}
-                 | NUMBER
-		 {printf("Term -> NUMBER %d\n", $1);}
-                 | SUB NUMBER
-		 {printf("Term -> UMI NUMBER %d\n", $2);}
-                 | L_PAREN Expression R_PAREN
-		 {printf("Term -> L_PAREN Expression R_PAREN\n");}
-                 | SUB L_PAREN Expression R_PAREN
-		 {printf("Term -> UMI L_PAREN Expression R_PAREN\n");}
-                 | Ident L_PAREN Expressions R_PAREN
-		 {printf("Term -> Ident L_PAREN Expressions R_PAREN\n");}
+| SUB Var
+{printf("Term -> UMI Var\n");}
+| NUMBER
+{printf("Term -> NUMBER %d\n", $1);}
+| SUB NUMBER
+{printf("Term -> UMI NUMBER %d\n", $2);}
+| L_PAREN Expression R_PAREN
+{printf("Term -> L_PAREN Expression R_PAREN\n");}
+| SUB L_PAREN Expression R_PAREN
+{printf("Term -> UMI L_PAREN Expression R_PAREN\n");}
+| Ident L_PAREN Expressions R_PAREN
+{
+  printf("Term -> Ident L_PAREN Expressions R_PAREN\n");
+  
+  // Check for use of undeclared function
+  if (functions.find($1) == functions.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Use of undeclared function %s", $1);
+    yyerror(temp);
+  }
+  else {
+    // TODO
+  }
+}
 ;
 
 BoolExp:         RAExp 
@@ -273,45 +326,70 @@ BoolExp:         RAExp
 ;
 
 RAExp:           RExp
-{printf("relation_and_exp -> relation_exp\n");}
-                 | RExp AND RAExp
-                 {printf("relation_and_exp -> relation_exp AND relation_and_exp\n");}
-;
+{
+  printf("relation_and_exp -> relation_exp\n");
+}
+| RExp AND RAExp
+{
+  printf("relation_and_exp -> relation_exp AND relation_and_exp\n");
+};
 
 RExp:            NOT RExp1 
-{printf("relation_exp -> NOT relation_exp1\n");}
-                 | RExp1
-                 {printf("relation_exp -> relation_exp1\n");}
+{
+  printf("relation_exp -> NOT relation_exp1\n");
+}
+| RExp1
+{
+  printf("relation_exp -> relation_exp1\n");
+};
 
-;
 RExp1:           Expression Comp Expression
-{printf("relation_exp -> Expression Comp Expression\n");}
-                 | TRUE
-		     {printf("relation_exp -> TRUE\n");}
-                 | FALSE
-		     {printf("relation_exp -> FALSE\n");}
-                 | L_PAREN BoolExp R_PAREN
-		   {printf("relation_exp -> L_PAREN BoolExp R_PAREN\n");}
-;
+{
+  printf("relation_exp -> Expression Comp Expression\n");
+}
+| TRUE
+{
+  printf("relation_exp -> TRUE\n");
+}
+| FALSE
+{
+  printf("relation_exp -> FALSE\n");
+}
+| L_PAREN BoolExp R_PAREN
+{
+  printf("relation_exp -> L_PAREN BoolExp R_PAREN\n");
+};
 
 Comp:            EQ
-{printf("comp -> EQ\n");}
-                 | NEQ
-                 {printf("comp -> NEQ\n");}
-                 | LT
-                 {printf("comp -> LT\n");}
-                 | GT
-                 {printf("comp -> GT\n");}
-                 | LTE
-                 {printf("comp -> LTE\n");}
-                 | GTE
-                 {printf("comp -> GTE\n");}
-;
+{
+  printf("comp -> EQ\n");
+}
+| NEQ
+{
+  printf("comp -> NEQ\n");
+}
+| LT
+{
+  printf("comp -> LT\n");
+}
+| GT
+{
+  printf("comp -> GT\n");
+}
+| LTE
+{
+  printf("comp -> LTE\n");
+}
+| GTE
+{
+  printf("comp -> GTE\n");
+};
+
 
 Ident:      IDENT
 {
   printf("Ident -> IDENT %s \n", $1);
-  $$ = $1;
+  $$ = strdup($1);
 }
 %%
 
@@ -321,6 +399,18 @@ void yyerror(const char* s) {
   extern char* yytext;
 
   printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, lineNum);
+}
+
+std::string newTemp() {
+  static int num = 0;
+  std::string temp = 't' + std::to_string(num++);
+  return temp;
+}
+
+std::string newLabel() {
+  static int num = 0;
+  std::string temp = 'L' + std::to_string(num++);
+  return temp;
 }
 		 
 

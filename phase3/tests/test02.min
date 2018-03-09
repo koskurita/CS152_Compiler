@@ -1,0 +1,23 @@
+## This tests use of functions before declaration
+
+function test;
+beginparams
+endparams
+beginlocals
+  nn : integer;
+endlocals
+beginbody
+  nn := 10;
+endbody
+
+function main;
+beginparams
+endparams
+
+beginlocals
+  nn : integer;
+endlocals
+beginbody	## main program
+  nn := 10;
+  test();
+endbody
