@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
-#include <string>
 #include <string.h>
   void yyerror(const char* s);
   int yylex();
@@ -17,19 +16,29 @@
    std::string op, src1, src2, dest;
  };
 
- struct Expr {
-   std::string place, code;
- };
 
- struct State {
+
+ struct S { // Statement
    std::string begin, after, code;
  };
  
 %}
 
+
 %union{
   char* ident_val;
   int num_val;
+  struct E {
+    char* place;
+    char* code;
+    bool array;
+  } expr;
+
+  struct S {
+    char* code;
+    char* begin;
+    char* after;
+  } stat;
  }
 
 %error-verbose
@@ -38,7 +47,10 @@
 %token <ident_val> IDENT
 %token <num_val> NUMBER
 
-%type <ident_val> Ident
+%type <expr> Ident
+%type <expr> Declarations Declaration Identifiers
+%type <stat> Statements Statement
+%type <expr> Var Expression MultExp Term
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -97,45 +109,59 @@
 
 Program:         %empty
 {
-  printf("Program -> epsilon\n");
+
 }
 | Function Program
 {
-  printf("Program -> Function Program\n");
+
 };
 
 Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
 {
-  printf("Function -> FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY\n");
-  
-  if (functions.find($2) != functions.end()) {
+  if (functions.find($2.place) != functions.end()) {
     char temp[128];
-    snprintf(temp, 128, "Redeclaration of function %s", $2);
+    snprintf(temp, 128, "Redeclaration of function %s", $2.place);
     yyerror(temp);
   }
   else {
-    functions.insert(std::pair<std::string,int>($2,0));
+    functions.insert(std::pair<std::string,int>($2.place,0));
   }
+
+  std::string temp = "func ";
+  temp.append($2.place);
+  temp.append("\n");
+  temp.append($2.code);
+  temp.append($5.code);
+  temp.append($8.code);
+  temp.append($11.begin);
+  temp.append($11.code);
+  temp.append($11.after);
+  
+  printf("%s", temp.c_str());
 };
 
 
 Declaration:     Identifiers COLON INTEGER
 {
-  printf("Declaration -> Identifiers COLON INTEGER\n");
+  $$.code = $1.code;
 }
 | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
 {
-  printf("Declaration -> Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER %d R_SQUARE_BRACKET OF INTEGER;\n", $5);
+  // TODO handle arrays
 }
 ;
 
 Declarations:    %empty
 {
-  printf("Declarations -> epsilon\n");
+  char temp[1] = "";
+  $$.code = strdup(temp);
 }
 | Declaration SEMICOLON Declarations
 {
-  printf("Declarations -> Declaration SEMICOLON Declarations\n");
+  std::string temp;
+  temp.append($1.code);
+  temp.append($3.code);
+  $$.code = strdup(temp.c_str());
 }
 ;
 
@@ -144,173 +170,282 @@ Declarations:    %empty
  */
 Identifiers:     Ident
 {
-  printf("Identifiers -> Ident \n");
-  
   // Check for redeclaraion
-  if (variables.find($1) != variables.end()) {
+  if (variables.find($1.place) != variables.end()) {
     char temp[128];
-    snprintf(temp, 128, "Redeclaration of variable %s", $1);
+    snprintf(temp, 128, "Redeclaration of variable %s", $1.place);
     yyerror(temp);
   }
   else {
-    variables.insert(std::pair<std::string,int>($1,0));
+    variables.insert(std::pair<std::string,int>($1.place,0));
   }
+
+  std::string temp;
+  temp.append(". ");
+  temp.append($1.place);
+  temp.append("\n");
+  $$.code = strdup(temp.c_str());
 }
 | Ident COMMA Identifiers
 {
-  printf("Identifiers -> Ident COMMA Identifiers\n");
-  
   // Check for redeclaration
-  if (variables.find($1) != variables.end()) {
+  if (variables.find($1.place) != variables.end()) {
     char temp[128];
-    snprintf(temp, 128, "Redeclaration of variable %s", $1);
+    snprintf(temp, 128, "Redeclaration of variable %s", $1.place);
     yyerror(temp);
   }
   else {
-    variables.insert(std::pair<std::string,int>($1,0));
-    printf("adding %s\n", $1);
+    variables.insert(std::pair<std::string,int>($1.place,0));
   }
+
+  std::string temp;
+  temp.append(". ");
+  temp.append($1.place);
+  temp.append("\n");
+  temp.append($3.code);
+  $$.code = strdup(temp.c_str());
 }
 
 Statements:      Statement SEMICOLON Statements
-{printf("Statements -> Statement SEMICOLON Statements\n");}
-                 | Statement SEMICOLON
-		 {printf("Statements -> Statement SEMICOLON\n");}
+{
+  std::string temp;
+  temp.append($1.begin);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($1.after);
+  temp.append("\n");
+  temp.append($3.begin);
+  temp.append("\n");
+  temp.append($3.code);
+  temp.append($3.after);
+  temp.append("\n");
+
+  char temp2[1] = "";
+  $$.begin = strdup(temp2);
+  $$.after = strdup(temp2);
+  $$.code = strdup(temp.c_str());
+}
+| Statement SEMICOLON
+{
+  std::string temp;
+  temp.append($1.begin);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($1.after);
+
+  char temp2[1] = "";
+  $$.begin = strdup(temp2);
+  $$.after = strdup(temp2);
+  $$.code = strdup(temp.c_str());
+}
 ;
 
 Statement:      Var ASSIGN Expression
 {
-  printf("Statement -> Var ASSIGN Expression\n");
+  
+  std::string temp;
+  temp.append($1.code);
+  temp.append($3.code);
+  if ($1.array && $3.array) {
+    // TODO error
+  }
+  else if ($1.array) {
+    temp.append("[]= ");
+  }
+  else if ($3.array) {
+    temp.append("=[] ");
+  }
+  else {
+    temp.append("= ");
+  }
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+
+  char temp2[1] = "";
+  $$.code = strdup(temp.c_str());
+  $$.begin = temp2;
+  $$.after = temp2;
 }
 | IF BoolExp THEN Statements ElseStatement ENDIF
 {
-  printf("Statement -> IF BoolExp THEN Statements ElseStatement ENDIF\n");
+
 }		 
 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
 {
-  printf("Statement -> WHILE BoolExp BEGINLOOP Statements ENDLOOP\n");
+
 }
 | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
 {
-  printf("Statement -> DO BEGINLOOP Statements ENDLOOP WHILE BoolExp\n");
+
 }
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
 {
-  printf("Statement -> FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP\n");
+
 }
 | READ Vars
 {
-  printf("Statement -> READ Vars\n");
+
 }
 | WRITE Vars
 {
-  printf("Statement -> WRITE Vars\n");
+
 }
 | CONTINUE
 {
-  printf("Statement -> CONTINUE\n");
+
 }
 | RETURN Expression
 {
-  printf("Statement -> RETURN Expression\n");
+
 };
 
 
 ElseStatement:   %empty
 {
-  printf("ElseStatement -> epsilon\n");
+
 }
 | ELSE Statements
 {
-  printf("ElseStatement -> ELSE Statements\n");
+
 };
 
 Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 {
-  printf("Var -> Ident  L_SQUARE_BRACKET Expression R_SQUARE_BRACKET\n");
-
   // Check for use of undeclared variable
-  if (variables.find($1) == variables.end()) {
+  if (variables.find($1.place) == variables.end()) {
     char temp[128];
-    snprintf(temp, 128, "Use of undeclared variable %s", $1);
+    snprintf(temp, 128, "Use of undeclared variable %s", $1.place);
     yyerror(temp);
   }
   else {
     // TODO
     //    variables.insert(std::pair<std::string,int>($1,0));
   }
+
+  std::string temp;
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+
+  char temp2[1] = "";
+  $$.code = strdup(temp2);
+  $$.place = strdup(temp.c_str());
+  $$.array = true;
 }
 | Ident
 {
-  printf("Var -> Ident \n");
-  printf("checking %s\n", $1);
-  if (variables.find($1) == variables.end()) {
+  if (variables.find($1.place) == variables.end()) {
     char temp[128];
-    snprintf(temp, 128, "Use of undeclared variable %s", $1);
+    snprintf(temp, 128, "Use of undeclared variable %s", $1.place);
     yyerror(temp);
   }
   else {
     // TODO
     //    variables.insert(std::pair<std::string,int>($1,0));
   }
+
+  $$.code = $1.code;
+  $$.place = $1.place;
+  $$.array = false;
 };
 
 Vars:            Var
 {
-  printf("Vars -> Var\n");
+
 }
 | Var COMMA Vars
 {
-  printf("Vars -> Var COMMA Vars\n");
+
 };
 
 
 
 Expression:      MultExp
-{printf("Expression -> MultExp\n");}
-                 | MultExp ADD Expression
-		 {printf("Expression -> MultExp ADD Expression\n");}
-                 | MultExp SUB Expression
-		 {printf("Expression -> MultExp SUB Expression\n");}
-;
+{
+  $$.code = $1.code;
+  $$.place = $1.place;
+}
+| MultExp ADD Expression
+{
+}
+| MultExp SUB Expression
+{
+};
+
 Expressions:     %empty
-{printf("Expressions -> epsilon\n");}
-                 | Expression COMMA Expressions
-		 {printf("Expressions -> Expression COMMA Expressions\n");}
-                 | Expression
-		 {printf("Expressions -> Expression\n");}
-;
+{
+}
+| Expression COMMA Expressions
+{
+}
+| Expression
+{
+};
+
 
 MultExp:         Term
-{printf("MultExp -> Term\n");}
-                 | Term MULT MultExp
-		 {printf("MultExp -> Term MULT MultExp\n");}
-                 | Term DIV MultExp
-		 {printf("MultExp -> Term DIV MultExp\n");}
-                 | Term MOD MultExp
-		 {printf("MultExp -> Term MOD MultExp\n");}
-;
+{
+  $$.code = $1.code;
+  $$.place = $1.place;
+}
+| Term MULT MultExp
+{
+  $$.place = strdup(newTemp().c_str());
+  
+  std::string temp;
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($3.code);
+  temp.append("* ");
+  temp.append($$.place);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
+}
+| Term DIV MultExp
+{
+}
+| Term MOD MultExp
+{
+};
+
 
 Term:            Var
-{printf("Term -> Var\n");}
+{
+}
 | SUB Var
-{printf("Term -> UMI Var\n");}
+{
+
+}
 | NUMBER
-{printf("Term -> NUMBER %d\n", $1);}
+{
+  char temp2[1] = "";
+  $$.code = strdup(temp2);
+  $$.place = strdup(std::to_string($1).c_str());
+}
 | SUB NUMBER
-{printf("Term -> UMI NUMBER %d\n", $2);}
+{
+}
 | L_PAREN Expression R_PAREN
-{printf("Term -> L_PAREN Expression R_PAREN\n");}
+{
+}
 | SUB L_PAREN Expression R_PAREN
-{printf("Term -> UMI L_PAREN Expression R_PAREN\n");}
+{
+}
 | Ident L_PAREN Expressions R_PAREN
 {
-  printf("Term -> Ident L_PAREN Expressions R_PAREN\n");
-  
-  // Check for use of undeclared function
-  if (functions.find($1) == functions.end()) {
+   // Check for use of undeclared function
+  if (functions.find($1.place) == functions.end()) {
     char temp[128];
-    snprintf(temp, 128, "Use of undeclared function %s", $1);
+    snprintf(temp, 128, "Use of undeclared function %s", $1.place);
     yyerror(temp);
   }
   else {
@@ -320,76 +455,78 @@ Term:            Var
 ;
 
 BoolExp:         RAExp 
-{printf("bool_exp -> relation_exp\n");}
-                 | RAExp OR BoolExp
-                 {printf("bool_exp -> relation_and_exp OR bool_exp\n");}
-;
+{
+}
+| RAExp OR BoolExp
+{
+};
 
 RAExp:           RExp
 {
-  printf("relation_and_exp -> relation_exp\n");
+
 }
 | RExp AND RAExp
 {
-  printf("relation_and_exp -> relation_exp AND relation_and_exp\n");
+
 };
 
 RExp:            NOT RExp1 
 {
-  printf("relation_exp -> NOT relation_exp1\n");
+
 }
 | RExp1
 {
-  printf("relation_exp -> relation_exp1\n");
+
 };
 
 RExp1:           Expression Comp Expression
 {
-  printf("relation_exp -> Expression Comp Expression\n");
+
 }
 | TRUE
 {
-  printf("relation_exp -> TRUE\n");
+
 }
 | FALSE
 {
-  printf("relation_exp -> FALSE\n");
+
 }
 | L_PAREN BoolExp R_PAREN
 {
-  printf("relation_exp -> L_PAREN BoolExp R_PAREN\n");
+
 };
 
 Comp:            EQ
 {
-  printf("comp -> EQ\n");
+
 }
 | NEQ
 {
-  printf("comp -> NEQ\n");
+
 }
 | LT
 {
-  printf("comp -> LT\n");
+
 }
 | GT
 {
-  printf("comp -> GT\n");
+
 }
 | LTE
 {
-  printf("comp -> LTE\n");
+
 }
 | GTE
 {
-  printf("comp -> GTE\n");
+
 };
 
 
 Ident:      IDENT
 {
-  printf("Ident -> IDENT %s \n", $1);
-  $$ = strdup($1);
+  char temp[1] = "";
+  $$.place = strdup($1);
+  $$.code = strdup(temp);;
 }
 %%
 
@@ -403,7 +540,7 @@ void yyerror(const char* s) {
 
 std::string newTemp() {
   static int num = 0;
-  std::string temp = 't' + std::to_string(num++);
+  std::string temp = "_t" + std::to_string(num++);
   return temp;
 }
 

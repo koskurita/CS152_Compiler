@@ -1,0 +1,16 @@
+function main;
+beginparams
+x : integer;
+a, b : integer;
+endparams
+
+beginlocals
+
+n : integer;
+
+endlocals
+
+beginbody	## main program
+		n[1] := 3;
+		n := n[1];
+endbody

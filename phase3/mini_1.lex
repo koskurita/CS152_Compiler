@@ -1,6 +1,7 @@
 
 /* Include Stuff */
 %{
+  #include <string>
   #include "mini_1.tab.h"
   
   int lineNum = 1, lineCol = 0;
