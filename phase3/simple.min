@@ -13,6 +13,8 @@ n : integer;
 endlocals
 
 beginbody	## main program
-		n[1] := 3;
-		n := n[1];
+		n := 0;
+		if n == 0 then
+		  n := 1;
+		endif;
 endbody

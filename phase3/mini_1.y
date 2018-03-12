@@ -11,10 +11,8 @@
 
   char empty[1] = "";
 
- std::map<std::string, int> variables;
- std::map<std::string, int> functions;
-
-
+  std::map<std::string, int> variables;
+  std::map<std::string, int> functions;
 %}
 
 
@@ -42,8 +40,8 @@
 
 %type <expr> Ident
 %type <expr> Declarations Declaration Identifiers
-%type <stat> Statements Statement
-%type <expr> Var Expression MultExp Term BoolExp
+%type <stat> Statements Statement ElseStatement
+%type <expr> Var Expression MultExp Term BoolExp RAExp RExp RExp1 Comp
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -126,9 +124,7 @@ Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS B
   temp.append($2.code);
   temp.append($5.code);
   temp.append($8.code);
-  temp.append($11.begin);
   temp.append($11.code);
-  temp.append($11.after);
   
   printf("%s", temp.c_str());
 };
@@ -257,26 +253,20 @@ Identifiers:     Ident
 Statements:      Statement SEMICOLON Statements
 {
   std::string temp;
-  temp.append($1.begin);
   temp.append($1.code);
-  temp.append($1.after);
-  temp.append($3.begin);
   temp.append($3.code);
-  temp.append($3.after);
 
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
+  $$.begin = strdup($1.begin);
+  $$.after = strdup($3.after);
   $$.code = strdup(temp.c_str());
 }
 | Statement SEMICOLON
 {
   std::string temp;
-  temp.append($1.begin);
   temp.append($1.code);
-  temp.append($1.after);
 
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
+  $$.begin = strdup($1.begin);
+  $$.after = strdup($1.after);
   $$.code = strdup(temp.c_str());
 }
 ;
@@ -309,16 +299,39 @@ Statement:      Var ASSIGN Expression
 }
 | IF BoolExp THEN Statements ElseStatement ENDIF
 {
-  std::string b = newLabel();
-  std::string a = newLabel();
+  // TODO Do we even need begin and after
+  std::string then_begin = newLabel();
+  std::string after = newLabel();
   std::string temp;
-  temp.append(b);
-  temp.append(":\n");
+
+  // evaluate expression
   temp.append($2.code);
+  // if true goto then label
   temp.append("?:= ");
-  temp.append($4.begin);
+  temp.append(then_begin);
   temp.append(", ");
   temp.append($2.place);
+  temp.append("\n");
+  // else code
+  temp.append($5.code);
+  // goto after
+  temp.append(":= ");
+  temp.append(after);
+  temp.append("\n");
+  // then label
+  temp.append(": ");
+  temp.append(then_begin);
+  temp.append("\n");
+  // then code
+  temp.append($4.code);
+  // after label
+  temp.append(": ");
+  temp.append(after);
+  temp.append("\n");
+  
+  $$.code = strdup(temp.c_str());
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }		 
 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
 {
@@ -352,7 +365,9 @@ Statement:      Var ASSIGN Expression
 
 ElseStatement:   %empty
 {
-
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
+  $$.code = strdup(empty);
 }
 | ELSE Statements
 {
@@ -460,9 +475,43 @@ MultExp:         Term
 }
 | Term DIV MultExp
 {
+  $$.place = strdup(newTemp().c_str());
+  
+  std::string temp;
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($3.code);
+  temp.append("/ ");
+  temp.append($$.place);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
 }
 | Term MOD MultExp
 {
+  $$.place = strdup(newTemp().c_str());
+  
+  std::string temp;
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($3.code);
+  temp.append("% ");
+  temp.append($$.place);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
 };
 
 
@@ -475,8 +524,7 @@ Term:            Var
 }
 | NUMBER
 {
-  char temp2[1] = "";
-  $$.code = strdup(temp2);
+  $$.code = strdup(empty);
   $$.place = strdup(std::to_string($1).c_str());
 }
 | SUB NUMBER
@@ -504,77 +552,163 @@ Term:            Var
 
 BoolExp:         RAExp 
 {
+  $$.place = strdup($1.place);
+  $$.code = strdup($1.code);
 }
 | RAExp OR BoolExp
 {
+  std::string dest = newTemp();
+  std::string temp;
+
+  temp.append(". ");
+  temp.append(dest);
+  temp.append("\n");
+  
+  temp.append("|| ");
+  temp.append(dest);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+  
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(dest.c_str());
 };
 
 RAExp:           RExp
 {
-
+  $$.place = strdup($1.place);
+  $$.code = strdup($1.code);
 }
 | RExp AND RAExp
 {
+  std::string dest = newTemp();
+  std::string temp;
 
+  temp.append(". ");
+  temp.append(dest);
+  temp.append("\n");
+  
+  temp.append("&& ");
+  temp.append(dest);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+  
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(dest.c_str());
 };
 
 RExp:            NOT RExp1 
 {
+  std::string dest = newTemp();
+  std::string temp;
 
+  temp.append(". ");
+  temp.append(dest);
+  temp.append("\n");
+  
+  temp.append("! ");
+  temp.append(dest);
+  temp.append(", ");
+  temp.append($2.place);
+  temp.append("\n");
+  
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(dest.c_str());
 }
 | RExp1
 {
-
+  $$.place = strdup($1.place);
+  $$.code = strdup($1.code);
 };
 
 RExp1:           Expression Comp Expression
 {
+  std::string dest = newTemp();
+  std::string temp;  
 
+  temp.append(". ");
+  temp.append(dest);
+  temp.append("\n");
+  
+  temp.append($1.code);
+  temp.append($3.code);
+  
+  temp.append($2.place);
+  temp.append(dest);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+  
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(dest.c_str());
 }
 | TRUE
 {
-
+  char temp[2] = "1";
+  $$.place = strdup(temp);
+  $$.code = strdup(empty);
 }
 | FALSE
 {
-
+  char temp[2] = "0";
+  $$.place = strdup(temp);
+  $$.code = strdup(empty);
 }
 | L_PAREN BoolExp R_PAREN
 {
-
+  $$.place = strdup($2.place);
+  $$.code = strdup($2.code);
 };
 
 Comp:            EQ
 {
-
+  std::string temp = "== ";
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 }
 | NEQ
 {
-
+  std::string temp = "!= ";
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 }
 | LT
 {
-
+  std::string temp = "< ";
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 }
 | GT
 {
-
+  std::string temp = "> ";
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 }
 | LTE
 {
-
+  std::string temp = "<= ";
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 }
 | GTE
 {
-
+  std::string temp = ">= ";
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 };
 
 
 Ident:      IDENT
 {
-  char temp[1] = "";
   $$.place = strdup($1);
-  $$.code = strdup(temp);;
+  $$.code = strdup(empty);;
 }
 %%
 
