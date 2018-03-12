@@ -2,6 +2,8 @@ function main;
 beginparams
 x : integer;
 a, b : integer;
+c : array [21] of integer;
+d, e : array [23] of integer;
 endparams
 
 beginlocals
