@@ -315,6 +315,7 @@ Statement:      Var ASSIGN Expression
   temp.append(b);
   temp.append(":\n");
   temp.append($2.code);
+
   temp.append("?:= ");
   temp.append($4.begin);
   temp.append(", ");
@@ -327,29 +328,32 @@ Statement:      Var ASSIGN Expression
 | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
 {
   std::string temp;
-  temp = newLabel();
-  temp.append("\n");
+  std::string beginLoop = newLabel();
+  std::string beginWhile = newLabel();
+  temp.append(beginLoop);
   temp.append($3.begin);
   temp.append("\n");
   temp.append($3.code);
   temp.append($3.after);
-  
+  	
   char temp2[1] = "";
   $$.begin = strdup(temp2);
   $$.after = strdup(temp2);
   $$.code = strdup(temp.c_str());
   
-  temp = newLabel();
+  temp.append(beginWhile);
 
   temp.append("\n");
-  temp.append($6.begin);
-  temp.append("\n");
   temp.append($6.code);
-  temp.append($6.after);
+  temp.append("?:= ");
+  temp.append(beginLoop);
+  temp.append(", ");
+  temp.append($6.place);
+  temp.append("\n");
   
-  char temp2[1] = "";
-  $$.begin = strdup(temp2);
-  $$.after = strdup(temp2);
+  char temp3[1] = "";
+  $$.begin = strdup(temp3);
+  $$.after = strdup(temp3);
   $$.code = strdup(temp.c_str());
 
 }
