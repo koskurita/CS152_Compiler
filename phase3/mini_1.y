@@ -339,6 +339,34 @@ Statement:      Var ASSIGN Expression
 }
 | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
 {
+  std::string temp;
+  std::string beginLoop = newLabel();
+  std::string beginWhile = newLabel();
+  temp.append(beginLoop);
+  temp.append($3.begin);
+  temp.append("\n");
+  temp.append($3.code);
+  temp.append($3.after);
+  	
+  char temp2[1] = "";
+  $$.begin = strdup(temp2);
+  $$.after = strdup(temp2);
+  $$.code = strdup(temp.c_str());
+  
+  temp.append(beginWhile);
+
+  temp.append("\n");
+  temp.append($6.code);
+  temp.append("?:= ");
+  temp.append(beginLoop);
+  temp.append(", ");
+  temp.append($6.place);
+  temp.append("\n");
+  
+  char temp3[1] = "";
+  $$.begin = strdup(temp3);
+  $$.after = strdup(temp3);
+  $$.code = strdup(temp.c_str());
 
 }
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
