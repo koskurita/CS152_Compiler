@@ -39,9 +39,9 @@
 %token <num_val> NUMBER
 
 %type <expr> Ident
-%type <expr> Declarations Declaration Identifiers
+%type <expr> Declarations Declaration Identifiers Var Vars
 %type <stat> Statements Statement ElseStatement
-%type <expr> Var Expression MultExp Term BoolExp RAExp RExp RExp1 Comp
+%type <expr> Expression MultExp Term BoolExp RAExp RExp RExp1 Comp
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -299,7 +299,6 @@ Statement:      Var ASSIGN Expression
 }
 | IF BoolExp THEN Statements ElseStatement ENDIF
 {
-  // TODO Do we even need begin and after
   std::string then_begin = newLabel();
   std::string after = newLabel();
   std::string temp;
@@ -337,11 +336,12 @@ Statement:      Var ASSIGN Expression
 {
 
 }
-| DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
+| DO BEGINLOOP Statements ENDLOOP WHILE BoolExp // TODO
 {
   std::string temp;
   std::string beginLoop = newLabel();
   std::string beginWhile = newLabel();
+  temp.append(": ");
   temp.append(beginLoop);
   temp.append($3.begin);
   temp.append("\n");
@@ -353,6 +353,7 @@ Statement:      Var ASSIGN Expression
   $$.after = strdup(temp2);
   $$.code = strdup(temp.c_str());
   
+  temp.append(": ");
   temp.append(beginWhile);
 
   temp.append("\n");
@@ -363,9 +364,8 @@ Statement:      Var ASSIGN Expression
   temp.append($6.place);
   temp.append("\n");
   
-  char temp3[1] = "";
-  $$.begin = strdup(temp3);
-  $$.after = strdup(temp3);
+  $$.begin = strdup(beginWhile);
+  $$.after = strdup(empty);
   $$.code = strdup(temp.c_str());
 
 }
@@ -375,6 +375,11 @@ Statement:      Var ASSIGN Expression
 }
 | READ Vars
 {
+  // Use "|" delimeter for vars
+  // Vars should return " dst"
+  //              or    "[] dst, num"
+  // this is wrong
+  // either .< or .[]<
 
 }
 | WRITE Vars
@@ -383,7 +388,9 @@ Statement:      Var ASSIGN Expression
 }
 | CONTINUE
 {
-
+  //  std::string temp = "continue\n";
+  //  $$.code = strdup(temp.c_str());
+  
 }
 | RETURN Expression
 {
@@ -399,7 +406,9 @@ ElseStatement:   %empty
 }
 | ELSE Statements
 {
-
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
+  $$.code = strdup($2.code);
 };
 
 Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
@@ -420,8 +429,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
   temp.append(", ");
   temp.append($3.place);
 
-  char temp2[1] = "";
-  $$.code = strdup(temp2);
+  $$.code = strdup(empty);
   $$.place = strdup(temp.c_str());
   $$.array = true;
 }
@@ -437,18 +445,40 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
     //    variables.insert(std::pair<std::string,int>($1,0));
   }
 
-  $$.code = $1.code;
-  $$.place = $1.place;
+  $$.code = strdup(empty);
+  $$.place = strdup($1.place);
   $$.array = false;
 };
 
 Vars:            Var
 {
+  // TODO fix
+  std::string temp;
+  if ($1.array)
+    temp.append("[] ");
+  else
+    temp.append(" ");
+  
+  temp.append($1.place);
 
+  $$.code = strdup(empty);
+  $$.place = strdup(temp.c_str());
 }
 | Var COMMA Vars
 {
+  // TODO fix
+  std::string temp;
+  if ($1.array)
+    temp.append("[] ");
+  else
+    temp.append(" ");
+  
+  temp.append($1.place);
+  temp.append("|");
+  temp.append($3.place);
 
+  $$.code = strdup(empty);
+  $$.place = strdup(temp.c_str());
 };
 
 
