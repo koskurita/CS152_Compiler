@@ -100,11 +100,9 @@
 
 Program:         %empty
 {
-
 }
 | Function Program
 {
-
 };
 
 Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
@@ -364,7 +362,7 @@ Statement:      Var ASSIGN Expression
   temp.append($6.place);
   temp.append("\n");
   
-  $$.begin = strdup(beginWhile);
+  $$.begin = strdup(beginWhile.c_str());
   $$.after = strdup(empty);
   $$.code = strdup(temp.c_str());
 
@@ -375,16 +373,33 @@ Statement:      Var ASSIGN Expression
 }
 | READ Vars
 {
-  // Use "|" delimeter for vars
-  // Vars should return " dst"
-  //              or    "[] dst, num"
-  // this is wrong
-  // either .< or .[]<
+  std::string temp = $2.code;
+  size_t pos = 0;
+  do {
+    pos = temp.find("|", pos);
+    if (pos == std::string::npos)
+      break;
+    temp.replace(pos, 1, "<");
+  } while (true);
 
+  $$.code = strdup(temp.c_str());
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }
 | WRITE Vars
 {
+  std::string temp = $2.code;
+  size_t pos = 0;
+  do {
+    pos = temp.find("|", pos);
+    if (pos == std::string::npos)
+      break;
+    temp.replace(pos, 1, ">");
+  } while (true);
 
+  $$.code = strdup(temp.c_str());
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }
 | CONTINUE
 {
@@ -450,38 +465,40 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
   $$.array = false;
 };
 
+/* Vars is only used by read and write
+ * pass back the code ".[]| dst/src"
+ * replace "|" with correct < or > depending on read/write
+ * in read and write production
+ */
 Vars:            Var
 {
-  // TODO fix
   std::string temp;
   if ($1.array)
-    temp.append("[] ");
+    temp.append(".[]| ");
   else
-    temp.append(" ");
+    temp.append(".| ");
   
   temp.append($1.place);
+  temp.append("\n");
 
-  $$.code = strdup(empty);
-  $$.place = strdup(temp.c_str());
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);
 }
 | Var COMMA Vars
 {
-  // TODO fix
   std::string temp;
   if ($1.array)
-    temp.append("[] ");
+    temp.append(".[]| ");
   else
-    temp.append(" ");
+    temp.append(".| ");
   
   temp.append($1.place);
-  temp.append("|");
-  temp.append($3.place);
+  temp.append("\n");
+  temp.append($3.code);
 
-  $$.code = strdup(empty);
-  $$.place = strdup(temp.c_str());
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);
 };
-
-
 
 Expression:      MultExp
 {

@@ -21,6 +21,8 @@ beginbody	## main program
 			beginloop
 				c[a] := a;
 				a := a + 1;
+				read x;
+				read a, e[1], b;
 			endloop
 		while a < x;
 
