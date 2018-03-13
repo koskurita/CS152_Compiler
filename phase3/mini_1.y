@@ -189,8 +189,7 @@ Declaration:     Identifiers COLON INTEGER
   
   $$.code = strdup(temp.c_str());
   $$.place = strdup(empty);	      
-}
-;
+};
 
 Declarations:    %empty
 {
@@ -205,8 +204,7 @@ Declarations:    %empty
   
   $$.code = strdup(temp.c_str());
   $$.place = strdup(empty);
-}
-;
+};
 
 /* Identifiers is only used by declaration; so it idents in it are
  * declarations
@@ -266,8 +264,7 @@ Statements:      Statement SEMICOLON Statements
   $$.begin = strdup($1.begin);
   $$.after = strdup($1.after);
   $$.code = strdup(temp.c_str());
-}
-;
+};
 
 Statement:      Var ASSIGN Expression
 {
@@ -332,7 +329,10 @@ Statement:      Var ASSIGN Expression
 }		 
 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
 {
-
+  // TODO
+  $$.code = strdup(empty);
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }
 | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp // TODO
 {
@@ -369,7 +369,10 @@ Statement:      Var ASSIGN Expression
 }
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
 {
-
+  // TODO
+  $$.code = strdup(empty);
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }
 | READ Vars
 {
@@ -405,11 +408,17 @@ Statement:      Var ASSIGN Expression
 {
   //  std::string temp = "continue\n";
   //  $$.code = strdup(temp.c_str());
-  
+    // TODO
+  $$.code = strdup(empty);
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }
 | RETURN Expression
 {
-
+  // TODO
+  $$.code = strdup(empty);
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 };
 
 
@@ -592,10 +601,15 @@ MultExp:         Term
 
 Term:            Var
 {
+  //TODO
+  $$.code = strdup($1.code);
+  $$.place = strdup($1.place);
 }
 | SUB Var
 {
-
+  //TODO
+  $$.code = strdup($2.code);
+  $$.place = strdup($2.place);
 }
 | NUMBER
 {
@@ -604,12 +618,21 @@ Term:            Var
 }
 | SUB NUMBER
 {
+  //TODO
+  $$.code = strdup(empty);
+  $$.place = strdup(std::to_string($2).c_str());
 }
 | L_PAREN Expression R_PAREN
 {
+  //TODO
+  $$.code = strdup($2.code);
+  $$.place = strdup($2.place);
 }
 | SUB L_PAREN Expression R_PAREN
 {
+  //TODO
+  $$.code = strdup($3.code);
+  $$.place = strdup($3.place);
 }
 | Ident L_PAREN Expressions R_PAREN
 {
@@ -622,6 +645,10 @@ Term:            Var
   else {
     // TODO
   }
+
+  //TODO
+  $$.code = strdup(empty);
+  $$.place = strdup(empty);
 }
 ;
 
