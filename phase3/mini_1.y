@@ -7,21 +7,14 @@
   void yyerror(const char* s);
   int yylex();
   std::string newTemp();
+  std::string newLabel();
 
+  char empty[1] = "";
 
  std::map<std::string, int> variables;
  std::map<std::string, int> functions;
 
- struct Quadruple {
-   std::string op, src1, src2, dest;
- };
 
-
-
- struct S { // Statement
-   std::string begin, after, code;
- };
- 
 %}
 
 
@@ -50,7 +43,7 @@
 %type <expr> Ident
 %type <expr> Declarations Declaration Identifiers
 %type <stat> Statements Statement
-%type <expr> Var Expression MultExp Term
+%type <expr> Var Expression MultExp Term BoolExp
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -143,25 +136,81 @@ Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS B
 
 Declaration:     Identifiers COLON INTEGER
 {
-  $$.code = $1.code;
+  std::string vars($1.place);
+  std::string temp;
+
+  // Build list of declarations base on list of identifiers
+  // identifiers use "|" as delimeter
+  size_t oldpos = 0;
+  size_t pos = 0;
+  while (true) {
+    pos = vars.find("|", oldpos);
+    if (pos == std::string::npos) {
+      temp.append(". ");
+      temp.append(vars.substr(oldpos, pos));
+      temp.append("\n");
+      break;
+    }
+    else {
+      size_t len = pos - oldpos;
+      temp.append(". ");
+      temp.append(vars.substr(oldpos, len));
+      temp.append("\n");
+    }
+    oldpos = pos + 1;
+  }
+  
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);	      
 }
 | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
 {
-  // TODO handle arrays
+  std::string vars($1.place);
+  std::string temp;
+
+  // Build list of declarations base on list of identifiers
+  // identifiers use "|" as delimeter
+  size_t oldpos = 0;
+  size_t pos = 0;
+  while (true) {
+    pos = vars.find("|", oldpos);
+    if (pos == std::string::npos) {
+      temp.append(".[] ");
+      temp.append(vars.substr(oldpos, pos));
+      temp.append(", ");
+      temp.append(std::to_string($5));
+      temp.append("\n");
+      break;
+    }
+    else {
+      size_t len = pos - oldpos;
+      temp.append(".[] ");
+      temp.append(vars.substr(oldpos, len));
+      temp.append(", ");
+      temp.append(std::to_string($5));
+      temp.append("\n");
+    }
+    oldpos = pos + 1;
+  }
+  
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);	      
 }
 ;
 
 Declarations:    %empty
 {
-  char temp[1] = "";
-  $$.code = strdup(temp);
+  $$.code = strdup(empty);
+  $$.place = strdup(empty);
 }
 | Declaration SEMICOLON Declarations
 {
   std::string temp;
   temp.append($1.code);
   temp.append($3.code);
+  
   $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);
 }
 ;
 
@@ -180,11 +229,8 @@ Identifiers:     Ident
     variables.insert(std::pair<std::string,int>($1.place,0));
   }
 
-  std::string temp;
-  temp.append(". ");
-  temp.append($1.place);
-  temp.append("\n");
-  $$.code = strdup(temp.c_str());
+  $$.place = strdup($1.place);
+  $$.code = strdup(empty);
 }
 | Ident COMMA Identifiers
 {
@@ -198,51 +244,45 @@ Identifiers:     Ident
     variables.insert(std::pair<std::string,int>($1.place,0));
   }
 
+  // use "|" as delimeter
   std::string temp;
-  temp.append(". ");
   temp.append($1.place);
-  temp.append("\n");
-  temp.append($3.code);
-  $$.code = strdup(temp.c_str());
+  temp.append("|");
+  temp.append($3.place);
+  
+  $$.place = strdup(temp.c_str());
+  $$.code = strdup(empty);
 }
 
 Statements:      Statement SEMICOLON Statements
 {
   std::string temp;
   temp.append($1.begin);
-  temp.append("\n");
   temp.append($1.code);
   temp.append($1.after);
-  temp.append("\n");
   temp.append($3.begin);
-  temp.append("\n");
   temp.append($3.code);
   temp.append($3.after);
-  temp.append("\n");
 
-  char temp2[1] = "";
-  $$.begin = strdup(temp2);
-  $$.after = strdup(temp2);
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
   $$.code = strdup(temp.c_str());
 }
 | Statement SEMICOLON
 {
   std::string temp;
   temp.append($1.begin);
-  temp.append("\n");
   temp.append($1.code);
   temp.append($1.after);
 
-  char temp2[1] = "";
-  $$.begin = strdup(temp2);
-  $$.after = strdup(temp2);
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
   $$.code = strdup(temp.c_str());
 }
 ;
 
 Statement:      Var ASSIGN Expression
 {
-  
   std::string temp;
   temp.append($1.code);
   temp.append($3.code);
@@ -263,14 +303,22 @@ Statement:      Var ASSIGN Expression
   temp.append($3.place);
   temp.append("\n");
 
-  char temp2[1] = "";
   $$.code = strdup(temp.c_str());
-  $$.begin = temp2;
-  $$.after = temp2;
+  $$.begin = strdup(empty);
+  $$.after = strdup(empty);
 }
 | IF BoolExp THEN Statements ElseStatement ENDIF
 {
-
+  std::string b = newLabel();
+  std::string a = newLabel();
+  std::string temp;
+  temp.append(b);
+  temp.append(":\n");
+  temp.append($2.code);
+  temp.append("?:= ");
+  temp.append($4.begin);
+  temp.append(", ");
+  temp.append($2.place);
 }		 
 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
 {
