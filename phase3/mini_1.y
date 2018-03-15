@@ -41,7 +41,7 @@
 %type <expr> Ident
 %type <expr> Declarations Declaration Identifiers Var Vars
 %type <stat> Statements Statement ElseStatement
-%type <expr> Expression MultExp Term BoolExp RAExp RExp RExp1 Comp
+%type <expr> Expression Expressions MultExp Term BoolExp RAExp RExp RExp1 Comp
 
 %token FUNCTION
 %token BEGIN_PARAMS
@@ -123,6 +123,7 @@ Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS B
   temp.append($5.code);
   temp.append($8.code);
   temp.append($11.code);
+  temp.append("endfunc\n");
   
   printf("%s", temp.c_str());
 };
@@ -429,17 +430,24 @@ Statement:      Var ASSIGN Expression
 }
 | CONTINUE
 {
-  //  std::string temp = "continue\n";
-  //  $$.code = strdup(temp.c_str());
-    // TODO
-  $$.code = strdup(empty);
+  // insert continue on a new line
+  // search for continue in loop
+  // and replace with := loop check
+  std::string temp = "continue\n";
+  $$.code = strdup(temp.c_str());
   $$.begin = strdup(empty);
   $$.after = strdup(empty);
 }
 | RETURN Expression
 {
   // TODO
-  $$.code = strdup(empty);
+  // check if place is right
+  std::string temp;
+  temp.append($2.code);
+  temp.append("ret ");
+  temp.append($2.place);
+  temp.append("\n");
+  $$.code = strdup(temp.c_str());
   $$.begin = strdup(empty);
   $$.after = strdup(empty);
 };
@@ -539,19 +547,73 @@ Expression:      MultExp
 }
 | MultExp ADD Expression
 {
+  $$.place = strdup(newTemp().c_str());
+  
+  std::string temp;
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($3.code);
+  temp.append("+ ");
+  temp.append($$.place);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
 }
 | MultExp SUB Expression
 {
+  $$.place = strdup(newTemp().c_str());
+  
+  std::string temp;
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  temp.append($1.code);
+  temp.append($3.code);
+  temp.append("- ");
+  temp.append($$.place);
+  temp.append(", ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
 };
 
+// used only for function calls
 Expressions:     %empty
 {
+  $$.code = strdup(empty);
+  $$.place = strdup(empty);
 }
 | Expression COMMA Expressions
 {
+  std::string temp;
+  temp.append($1.code);
+  temp.append("param ");
+  temp.append($1.place);
+  temp.append("\n");
+  temp.append($3.code);
+
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);
 }
 | Expression
 {
+  std::string temp;
+  temp.append($1.code);
+  temp.append("param ");
+  temp.append($1.place);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
+  $$.place = strdup(empty);
 };
 
 
@@ -670,8 +732,20 @@ Term:            Var
   }
 
   //TODO
-  $$.code = strdup(empty);
-  $$.place = strdup(empty);
+  $$.place = strdup(newTemp().c_str());
+
+  std::string temp;
+  temp.append($3.code);
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  temp.append("call ");
+  temp.append($1.place);
+  temp.append(", ");
+  temp.append($$.place);
+  temp.append("\n");
+  
+  $$.code = strdup(temp.c_str());
 }
 ;
 
