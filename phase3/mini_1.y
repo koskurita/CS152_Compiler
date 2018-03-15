@@ -75,7 +75,6 @@
 %token RETURN
 
 %left SUB
-//%right UMI
 %left ADD
 %left MULT
 %left DIV
@@ -484,7 +483,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
   temp.append(", ");
   temp.append($3.place);
 
-  $$.code = strdup(empty);
+  $$.code = strdup($3.code);
   $$.place = strdup(temp.c_str());
   $$.array = true;
 }
@@ -513,6 +512,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 Vars:            Var
 {
   std::string temp;
+  temp.append($1.code);
   if ($1.array)
     temp.append(".[]| ");
   else
@@ -527,6 +527,8 @@ Vars:            Var
 | Var COMMA Vars
 {
   std::string temp;
+  temp.append($1.code);
+  temp.append($3.code);
   if ($1.array)
     temp.append(".[]| ");
   else
@@ -534,7 +536,7 @@ Vars:            Var
   
   temp.append($1.place);
   temp.append("\n");
-  temp.append($3.code);
+
 
   $$.code = strdup(temp.c_str());
   $$.place = strdup(empty);
@@ -542,19 +544,19 @@ Vars:            Var
 
 Expression:      MultExp
 {
-  $$.code = $1.code;
-  $$.place = $1.place;
+  $$.code = strdup($1.code);
+  $$.place = strdup($1.place);
 }
 | MultExp ADD Expression
 {
   $$.place = strdup(newTemp().c_str());
   
   std::string temp;
+  temp.append($1.code);
+  temp.append($3.code);
   temp.append(". ");
   temp.append($$.place);
   temp.append("\n");
-  temp.append($1.code);
-  temp.append($3.code);
   temp.append("+ ");
   temp.append($$.place);
   temp.append(", ");
@@ -570,11 +572,11 @@ Expression:      MultExp
   $$.place = strdup(newTemp().c_str());
   
   std::string temp;
+  temp.append($1.code);
+  temp.append($3.code);
   temp.append(". ");
   temp.append($$.place);
   temp.append("\n");
-  temp.append($1.code);
-  temp.append($3.code);
   temp.append("- ");
   temp.append($$.place);
   temp.append(", ");
@@ -619,8 +621,8 @@ Expressions:     %empty
 
 MultExp:         Term
 {
-  $$.code = $1.code;
-  $$.place = $1.place;
+  $$.code = strdup($1.code);
+  $$.place = strdup($1.place);
 }
 | Term MULT MultExp
 {
@@ -686,15 +688,39 @@ MultExp:         Term
 
 Term:            Var
 {
-  //TODO
   $$.code = strdup($1.code);
   $$.place = strdup($1.place);
 }
 | SUB Var
 {
-  //TODO
-  $$.code = strdup($2.code);
-  $$.place = strdup($2.place);
+  // Var can either be an array or not an array
+  $$.place = strdup(newTemp().c_str());
+  std::string temp;
+  temp.append($2.code);
+  temp.append(". ");
+  temp.append($$.place);
+  temp.append("\n");
+  if ($2.array) {
+    temp.append("=[] ");
+    temp.append($$.place);
+    temp.append(", ");
+    temp.append($2.place);
+    temp.append("\n");
+  }
+  else {
+    temp.append("= ");
+    temp.append($$.place);
+    temp.append(", ");
+    temp.append($2.place);
+    temp.append("\n");
+  }
+  temp.append("* ");
+  temp.append($$.place);
+  temp.append(", ");
+  temp.append($$.place);
+  temp.append(", -1\n");
+  
+  $$.code = strdup(temp.c_str());
 }
 | NUMBER
 {
@@ -731,7 +757,6 @@ Term:            Var
     // TODO
   }
 
-  //TODO
   $$.place = strdup(newTemp().c_str());
 
   std::string temp;
@@ -746,8 +771,7 @@ Term:            Var
   temp.append("\n");
   
   $$.code = strdup(temp.c_str());
-}
-;
+};
 
 BoolExp:         RAExp 
 {
@@ -903,15 +927,13 @@ Comp:            EQ
   $$.code = strdup(empty);
 };
 
-
 Ident:      IDENT
 {
   $$.place = strdup($1);
   $$.code = strdup(empty);;
-}
+};
 %%
 
-		 
 void yyerror(const char* s) {
   extern int lineNum;
   extern char* yytext;

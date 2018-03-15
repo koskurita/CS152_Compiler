@@ -69,12 +69,6 @@ NEWLINE [\n]
   lineCol += yyleng;
 	}
 
-"-"{DIGIT}+ {
-  yylval.num_val = atoi(yytext);
-//  return UMI;
-  lineCol += yyleng;
-       }
-
 {DIGIT}+ {
   yylval.num_val = atoi(yytext);
   return NUMBER;

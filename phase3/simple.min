@@ -70,4 +70,14 @@ beginbody	## main program
 		## test function call
 		x := test(x);
 
+		## test unary minus
+		a := -a;
+		n[1] := -n[1];
+
+		## test array access with expression
+		a := 1;
+		b := n[1-a];
+		read n[a-1];
+		write n[a-1];
+
 endbody
