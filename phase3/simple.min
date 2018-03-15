@@ -25,5 +25,12 @@ beginbody	## main program
 				read a, e[1], b;
 			endloop
 		while a < x;
+		
+                b := 0;
+
+		while b < x
+			beginloop
+				b := b + 1;
+		endloop;
 
 endbody

@@ -75,7 +75,7 @@
 %token RETURN
 
 %left SUB
-%right UMI
+//%right UMI
 %left ADD
 %left MULT
 %left DIV
@@ -329,8 +329,31 @@ Statement:      Var ASSIGN Expression
 }		 
 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
 {
-  // TODO
-  $$.code = strdup(empty);
+  std::string temp;
+  std::string beginWhile = newLabel();
+  std::string beginLoop = newLabel();
+  std::string endLoop = newLabel();
+  temp.append(": ");
+  temp.append(beginWhile);
+  temp.append("\n");
+  temp.append($2.code);
+  temp.append("?:= ");
+  temp.append(beginLoop);
+  temp.append("\n");
+  temp.append(":= ");
+  temp.append(endLoop);
+  temp.append("\n");
+  temp.append(": ");
+  temp.append(beginLoop);
+  temp.append($4.begin);
+  temp.append("\n");
+  temp.append($4.code);
+  temp.append($4.after);
+  temp.append(": ");
+  temp.append(endLoop);
+  temp.append("\n");
+
+  $$.code = strdup(temp.c_str());
   $$.begin = strdup(empty);
   $$.after = strdup(empty);
 }

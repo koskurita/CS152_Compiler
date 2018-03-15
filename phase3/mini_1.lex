@@ -71,7 +71,7 @@ NEWLINE [\n]
 
 "-"{DIGIT}+ {
   yylval.num_val = atoi(yytext);
-  return UMI;
+//  return UMI;
   lineCol += yyleng;
        }
 
