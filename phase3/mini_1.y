@@ -120,6 +120,18 @@ Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS B
   temp.append("\n");
   temp.append($2.code);
   temp.append($5.code);
+  // TODO
+  std::string init_params = $5.code;
+  int param_number = 0;
+  while (init_params.find(".") != std::string::npos) {
+    size_t pos = init_params.find(".");
+    init_params.replace(pos, 1, "=");
+    std::string param = ", $";
+    param.append(std::to_string(param_number++));
+    param.append("\n");
+    init_params.replace(init_params.find("\n", pos), 1, param);
+  }
+  temp.append(init_params);
   temp.append($8.code);
   temp.append($11.code);
   temp.append("endfunc\n");
@@ -422,12 +434,68 @@ Statement:      Var ASSIGN Expression
 }
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
 {
-  // TODO
   std::string temp;
-  
+  std::string check = newTemp();
+  std::string beginForeach = newLabel();
+  std::string beginLoop = newLabel();
+  std::string increment = newLabel();
+  std::string endLoop = newLabel();
+  // replace continue
+  std::string statement = $6.code;
+  std::string jump;
+  jump.append(":= ");
+  jump.append(increment);
+  while (statement.find("continue") != std::string::npos) {
+    statement.replace(statement.find("continue"), 8, jump);
+  }
+
+  // Initalize bool
+  temp.append(". ");
+  temp.append(check);
+  temp.append("\n");
   // Loop check
+  temp.append(": ");
+  temp.append(beginForeach);
+  temp.append("\n");
+  temp.append("<= ");
+  temp.append(check);
+  temp.append(", ");
+  temp.append($2.place);
+  temp.append(", ");
+  temp.append($4.place);
+  temp.append("\n");
+  temp.append("?:= ");
+  temp.append(beginLoop);
+  temp.append(", ");
+  temp.append(check);
+  temp.append("\n");
+  // Check fails go to end
+  temp.append(":= ");
+  temp.append(endLoop);
+  temp.append("\n");
+  // Check Succeeds
+  temp.append(": ");
+  temp.append(beginLoop);
+  temp.append("\n");
+  temp.append(statement);
+  // increment
+  temp.append(": ");
+  temp.append(increment);
+  temp.append("\n");
+  temp.append("+ ");
+  temp.append($2.place);
+  temp.append(", ");
+  temp.append($2.place);
+  temp.append(", 1\n");
+  temp.append(":= ");
+  // go to check
+  temp.append(beginForeach);
+  // label endLoop
+  temp.append(": ");
+  temp.append(endLoop);
+  temp.append("\n");
   
-  $$.code = strdup(empty);
+  $$.code = strdup(temp.c_str());
   $$.begin = strdup(empty);
   $$.after = strdup(empty);
 }
