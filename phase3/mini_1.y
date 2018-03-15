@@ -271,8 +271,18 @@ Statement:      Var ASSIGN Expression
   std::string temp;
   temp.append($1.code);
   temp.append($3.code);
+  std::string intermediate = $3.place;
   if ($1.array && $3.array) {
-    // TODO error
+    intermediate = newTemp();
+    temp.append(". ");
+    temp.append(intermediate);
+    temp.append("\n");
+    temp.append("=[] ");
+    temp.append(intermediate);
+    temp.append(", ");
+    temp.append($3.place);
+    temp.append("\n");
+    temp.append("[]= ");
   }
   else if ($1.array) {
     temp.append("[]= ");
@@ -285,7 +295,7 @@ Statement:      Var ASSIGN Expression
   }
   temp.append($1.place);
   temp.append(", ");
-  temp.append($3.place);
+  temp.append(intermediate);
   temp.append("\n");
 
   $$.code = strdup(temp.c_str());
@@ -333,12 +343,23 @@ Statement:      Var ASSIGN Expression
   std::string beginWhile = newLabel();
   std::string beginLoop = newLabel();
   std::string endLoop = newLabel();
+  // replace continue
+  std::string statement = $4.code;
+  std::string jump;
+  jump.append(":= ");
+  jump.append(beginWhile);
+  while (statement.find("continue") != std::string::npos) {
+    statement.replace(statement.find("continue"), 8, jump);
+  }
+  
   temp.append(": ");
   temp.append(beginWhile);
   temp.append("\n");
   temp.append($2.code);
   temp.append("?:= ");
   temp.append(beginLoop);
+  temp.append(", ");
+  temp.append($2.place);
   temp.append("\n");
   temp.append(":= ");
   temp.append(endLoop);
@@ -347,7 +368,7 @@ Statement:      Var ASSIGN Expression
   temp.append(beginLoop);
   temp.append($4.begin);
   temp.append("\n");
-  temp.append($4.code);
+  temp.append(statement);
   temp.append($4.after);
   temp.append(": ");
   temp.append(endLoop);
@@ -362,11 +383,20 @@ Statement:      Var ASSIGN Expression
   std::string temp;
   std::string beginLoop = newLabel();
   std::string beginWhile = newLabel();
+  // replace continue
+  std::string statement = $3.code;
+  std::string jump;
+  jump.append(":= ");
+  jump.append(beginWhile);
+  while (statement.find("continue") != std::string::npos) {
+    statement.replace(statement.find("continue"), 8, jump);
+  }
+  
   temp.append(": ");
   temp.append(beginLoop);
   temp.append($3.begin);
   temp.append("\n");
-  temp.append($3.code);
+  temp.append(statement);
   temp.append($3.after);
   	
   char temp2[1] = "";
@@ -393,6 +423,10 @@ Statement:      Var ASSIGN Expression
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
 {
   // TODO
+  std::string temp;
+  
+  // Loop check
+  
   $$.code = strdup(empty);
   $$.begin = strdup(empty);
   $$.after = strdup(empty);
@@ -528,7 +562,6 @@ Vars:            Var
 {
   std::string temp;
   temp.append($1.code);
-  temp.append($3.code);
   if ($1.array)
     temp.append(".[]| ");
   else
@@ -536,8 +569,8 @@ Vars:            Var
   
   temp.append($1.place);
   temp.append("\n");
-
-
+  temp.append($3.code);
+  
   $$.code = strdup(temp.c_str());
   $$.place = strdup(empty);
 };
@@ -729,21 +762,28 @@ Term:            Var
 }
 | SUB NUMBER
 {
-  //TODO
+  std::string temp;
+  temp.append("-");
+  temp.append(std::to_string($2));
   $$.code = strdup(empty);
-  $$.place = strdup(std::to_string($2).c_str());
+  $$.place = strdup(temp.c_str());
 }
 | L_PAREN Expression R_PAREN
 {
-  //TODO
   $$.code = strdup($2.code);
   $$.place = strdup($2.place);
 }
 | SUB L_PAREN Expression R_PAREN
 {
-  //TODO
-  $$.code = strdup($3.code);
   $$.place = strdup($3.place);
+  std::string temp;
+  temp.append($3.code);
+  temp.append("* ");
+  temp.append($3.place);
+  temp.append(", ");
+  temp.append($3.place);
+  temp.append(", -1\n");
+  $$.code = strdup(temp.c_str());
 }
 | Ident L_PAREN Expressions R_PAREN
 {
@@ -783,6 +823,8 @@ BoolExp:         RAExp
   std::string dest = newTemp();
   std::string temp;
 
+  temp.append($1.code);
+  temp.append($3.code);
   temp.append(". ");
   temp.append(dest);
   temp.append("\n");
@@ -809,6 +851,8 @@ RAExp:           RExp
   std::string dest = newTemp();
   std::string temp;
 
+  temp.append($1.code);
+  temp.append($3.code);
   temp.append(". ");
   temp.append(dest);
   temp.append("\n");
@@ -830,6 +874,7 @@ RExp:            NOT RExp1
   std::string dest = newTemp();
   std::string temp;
 
+  temp.append($2.code);
   temp.append(". ");
   temp.append(dest);
   temp.append("\n");
@@ -854,13 +899,11 @@ RExp1:           Expression Comp Expression
   std::string dest = newTemp();
   std::string temp;  
 
+  temp.append($1.code);
+  temp.append($3.code);
   temp.append(". ");
   temp.append(dest);
   temp.append("\n");
-  
-  temp.append($1.code);
-  temp.append($3.code);
-  
   temp.append($2.place);
   temp.append(dest);
   temp.append(", ");

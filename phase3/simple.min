@@ -52,6 +52,7 @@ beginbody	## main program
 		while b < x
 			beginloop
 				b := b + 1;
+				continue;
 		endloop;
 
 		## test read and write vars
@@ -72,6 +73,7 @@ beginbody	## main program
 
 		## test unary minus
 		a := -a;
+		b := -1;
 		n[1] := -n[1];
 
 		## test array access with expression
@@ -79,5 +81,8 @@ beginbody	## main program
 		b := n[1-a];
 		read n[a-1];
 		write n[a-1];
+
+		## test -(expression)
+		a := -(a*a);
 
 endbody
