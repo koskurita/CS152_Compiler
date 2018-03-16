@@ -457,6 +457,18 @@ Statement:      Var ASSIGN Expression
     statement.replace(statement.find("continue"), 8, jump);
   }
 
+  // Check if second ident exists
+  if (variables.find(std::string($4.place)) == variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Use of undeclared variable %s", $4.place);
+    yyerror(temp);
+  }
+  // Check if second ident is scalar
+  else if (variables.find(std::string($4.place))->second == 0) {
+    char temp[128];
+    snprintf(temp, 128, "Use of scalar variable %s in foreach", $4.place);
+    yyerror(temp);
+  }
   // TODO statments that use the ident complain about undeclared
   // Check for redeclaration (test 04) TODO same name as program
   std::string variable($2.place);
@@ -491,7 +503,7 @@ Statement:      Var ASSIGN Expression
   temp.append(", ");
   temp.append(count);
   temp.append(", ");
-  temp.append(std::to_string(variables.at(std::string($4.place))));
+  temp.append(std::to_string(variables.find(std::string($4.place))->second));
   temp.append("\n");
   // Jump to begin loop if check is true
   temp.append("?:= ");
@@ -602,7 +614,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
     yyerror(temp);
   }
   // Check for use of single value as array (test 07)
-  else if (variables.at(std::string($1.place)) == 0) {
+  else if (variables.find(std::string($1.place))->second == 0) {
     char temp[128];
     snprintf(temp, 128, "Indexing a non-array variable %s", $1.place);
     yyerror(temp);
@@ -626,7 +638,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
     yyerror(temp);
   }
   // Check for use of array as single value (test 06)
-  else if (variables.at($1.place) > 0) {
+  else if (variables.find(std::string($1.place))->second > 0) {
     char temp[128];
     snprintf(temp, 128, "Failed to provide index for array variable %s", $1.place);
     yyerror(temp);
@@ -820,8 +832,27 @@ MultExp:         Term
 
 Term:            Var
 {
-  $$.code = strdup($1.code);
-  $$.place = strdup($1.place);
+  // var can be an array or not
+  if ($$.array == true) {
+    std::string temp;
+    std::string intermediate = newTemp();
+    temp.append($1.code);
+    temp.append(". ");
+    temp.append(intermediate);
+    temp.append("\n");
+    temp.append("=[] ");
+    temp.append(intermediate);
+    temp.append(", ");
+    temp.append($1.place);
+    temp.append("\n");
+    $$.code = strdup(temp.c_str());
+    $$.place = strdup(intermediate.c_str());
+    $$.array = false;
+  }
+  else {
+    $$.code = strdup($1.code);
+    $$.place = strdup($1.place);
+  }
 }
 | SUB Var
 {
@@ -853,6 +884,7 @@ Term:            Var
   temp.append(", -1\n");
   
   $$.code = strdup(temp.c_str());
+  $$.array = false;
 }
 | NUMBER
 {
