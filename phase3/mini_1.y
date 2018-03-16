@@ -102,10 +102,8 @@
 
 Program:         %empty
 {
-  std::map<std::string, int>::iterator it;
   std::string tempMain = "main";
-  it = functions.find(tempMain);
-  if ( it == functions.end()) {
+  if ( functions.find(tempMain) == functions.end()) {
     char temp[128];
     snprintf(temp, 128, "Function main not declared");
     yyerror(temp);
