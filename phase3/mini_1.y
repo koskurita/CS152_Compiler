@@ -13,11 +13,10 @@
   std::string newLabel();
 
   char empty[1] = "";
-  unsigned int loop_depth = 0; // holds the number of loops we are inside
 
   std::map<std::string, int> variables;
   // maps to 0 for single value
-  // maps to 1 for array
+  // maps to # > 0 for array (size of array)
   std::map<std::string, int> functions;
 %}
 
@@ -245,7 +244,7 @@ Declaration:     Identifiers COLON INTEGER
       yyerror(temp);
     }
     else {
-      variables.insert(std::pair<std::string,int>(variable,1));
+      variables.insert(std::pair<std::string,int>(variable,$5));
     }
       
     oldpos = pos + 1;
@@ -443,8 +442,9 @@ Statement:      Var ASSIGN Expression
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
 {
   std::string temp;
+  std::string count = newTemp();
   std::string check = newTemp();
-  std::string beginForeach = newLabel();
+  std::string begin = newLabel();
   std::string beginLoop = newLabel();
   std::string increment = newLabel();
   std::string endLoop = newLabel();
@@ -457,47 +457,79 @@ Statement:      Var ASSIGN Expression
     statement.replace(statement.find("continue"), 8, jump);
   }
 
-  // Initalize bool
+  // TODO statments that use the ident complain about undeclared
+  // Check for redeclaration (test 04) TODO same name as program
+  std::string variable($2.place);
+  if (variables.find(variable) != variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Redeclaration of variable %s", variable.c_str());
+    yyerror(temp);
+  }
+  else {
+    variables.insert(std::pair<std::string,int>(variable,0));
+  }
+  // Initalize first ident and check
+  temp.append(". ");
+  temp.append($2.place);
+  temp.append("\n");
   temp.append(". ");
   temp.append(check);
   temp.append("\n");
-  // Loop check
-  temp.append(": ");
-  temp.append(beginForeach);
+  temp.append(". ");
+  temp.append(count);
   temp.append("\n");
-  temp.append("<= ");
+  temp.append("= ");
+  temp.append(count);
+  temp.append(", 0");
+  temp.append("\n");
+  // Check if count is less than size of array
+  temp.append(": ");
+  temp.append(begin);
+  temp.append("\n");
+  temp.append("< ");
   temp.append(check);
   temp.append(", ");
-  temp.append($2.place);
+  temp.append(count);
   temp.append(", ");
-  temp.append($4.place);
+  temp.append(std::to_string(variables.at(std::string($4.place))));
   temp.append("\n");
+  // Jump to begin loop if check is true
   temp.append("?:= ");
   temp.append(beginLoop);
   temp.append(", ");
   temp.append(check);
   temp.append("\n");
-  // Check fails go to end
+  // Jump to end loop if check is false
   temp.append(":= ");
   temp.append(endLoop);
   temp.append("\n");
-  // Check Succeeds
+  // Begin loop
   temp.append(": ");
   temp.append(beginLoop);
   temp.append("\n");
+  // Set first ident to value of second ident
+  temp.append("=[] ");
+  temp.append($2.place);
+  temp.append(", ");
+  temp.append($4.place);
+  temp.append(", ");
+  temp.append(count);
+  temp.append("\n");
+  // Execute code
   temp.append(statement);
-  // increment
+  // Increment
   temp.append(": ");
   temp.append(increment);
   temp.append("\n");
   temp.append("+ ");
-  temp.append($2.place);
+  temp.append(count);
   temp.append(", ");
-  temp.append($2.place);
+  temp.append(count);
   temp.append(", 1\n");
+  // Jump to check
   temp.append(":= ");
-  // go to check
-  temp.append(beginForeach);
+  temp.append(begin);
+  temp.append("\n");
   // label endLoop
   temp.append(": ");
   temp.append(endLoop);
@@ -594,7 +626,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
     yyerror(temp);
   }
   // Check for use of array as single value (test 06)
-  else if (variables.at($1.place) == 1) {
+  else if (variables.at($1.place) > 0) {
     char temp[128];
     snprintf(temp, 128, "Failed to provide index for array variable %s", $1.place);
     yyerror(temp);
