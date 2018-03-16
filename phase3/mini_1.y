@@ -103,6 +103,14 @@
 
 Program:         %empty
 {
+  //std::map<std::string, int>::interator it;
+  std::string tempMain = "main";
+  //it = functions.find(tempMain);
+  if ( functions.find(tempMain.c_str()) == std::string::npos) {
+    char temp[128];
+    snprintf(temp, 128, "Function main not declared");
+    yyerror(temp);
+  }
 }
 | Function Program
 {
