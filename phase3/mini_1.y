@@ -180,6 +180,13 @@ Declaration:     Identifiers COLON INTEGER
 }
 | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER
 {
+  // Check if declaring arrays of size <= 0 (test 08)
+  if ($5 <= 0) {
+    char temp[128];
+    snprintf(temp, 128, "Array size can't be less than 1");
+    yyerror(temp);
+  }
+  
   std::string vars($1.place);
   std::string temp;
 
@@ -192,7 +199,7 @@ Declaration:     Identifiers COLON INTEGER
     if (pos == std::string::npos) {
       temp.append(".[] ");
       temp.append(vars.substr(oldpos, pos));
-      // Check for redeclaraion
+      // Check for redeclaraion (test 04)
       if (variables.find(vars.substr(oldpos, pos)) != variables.end()) {
 	char temp[128];
 	snprintf(temp, 128, "Redeclaration of variable %s", vars.substr(oldpos, pos).c_str());
