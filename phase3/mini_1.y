@@ -102,9 +102,7 @@
 
 Program:         %empty
 {
-  //std::map<std::string, int>::interator it;
   std::string tempMain = "main";
-  //it = functions.find(tempMain);
   if ( functions.find(tempMain) == functions.end()) {
     char temp[128];
     snprintf(temp, 128, "Function main not declared");
