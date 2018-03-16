@@ -10,6 +10,7 @@
   extern int lineNum;
   extern int lineCol;
   extern char* yytext;
+  extern char* progName;
   std::string newTemp();
   std::string newLabel();
 
@@ -110,6 +111,12 @@ Program:         %empty
   if ( functions.find(tempMain) == functions.end()) {
     char temp[128];
     snprintf(temp, 128, "Function main not declared");
+    yyerror(temp);
+  }
+  // Check if user declared variable the same as program name
+  if (variables.find(std::string(progName)) != variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Declared program name as variable.");
     yyerror(temp);
   }
 }
@@ -402,7 +409,7 @@ Statement:      Var ASSIGN Expression
 
   $$.code = strdup(temp.c_str());
 }
-| DO BEGINLOOP Statements ENDLOOP WHILE BoolExp // TODO
+| DO BEGINLOOP Statements ENDLOOP WHILE BoolExp
 {
   std::string temp;
   std::string beginLoop = newLabel();
@@ -568,8 +575,6 @@ Statement:      Var ASSIGN Expression
 }
 | RETURN Expression
 {
-  // TODO
-  // check if place is right
   std::string temp;
   temp.append($2.code);
   temp.append("ret ");
