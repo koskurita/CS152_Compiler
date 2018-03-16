@@ -41,7 +41,7 @@
 %token <ident_val> IDENT
 %token <num_val> NUMBER
 
-%type <expr> Ident
+%type <expr> Ident LocalIdent
 %type <expr> Declarations Declaration Identifiers Var Vars
 %type <stat> Statements Statement ElseStatement
 %type <expr> Expression Expressions MultExp Term BoolExp RAExp RExp RExp1 Comp
@@ -437,7 +437,7 @@ Statement:      Var ASSIGN Expression
   
   $$.code = strdup(temp.c_str());
 }
-| FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
+| FOREACH LocalIdent IN Ident BEGINLOOP Statements ENDLOOP
 {
   std::string temp;
   std::string count = newTemp();
@@ -454,8 +454,7 @@ Statement:      Var ASSIGN Expression
   while (statement.find("continue") != std::string::npos) {
     statement.replace(statement.find("continue"), 8, jump);
   }
-
-  // Check if second ident exists
+  // Checks for second ident
   if (variables.find(std::string($4.place)) == variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared variable %s", $4.place);
@@ -467,17 +466,8 @@ Statement:      Var ASSIGN Expression
     snprintf(temp, 128, "Use of scalar variable %s in foreach", $4.place);
     yyerror(temp);
   }
-  // TODO statments that use the ident complain about undeclared
-  // Check for redeclaration (test 04) TODO same name as program
-  std::string variable($2.place);
-  if (variables.find(variable) != variables.end()) {
-    char temp[128];
-    snprintf(temp, 128, "Redeclaration of variable %s", variable.c_str());
-    yyerror(temp);
-  }
-  else {
-    variables.insert(std::pair<std::string,int>(variable,0));
-  }
+  // checks for LocalIdent happen in LocalIdent (redeclaration test)
+
   // Initalize first ident and check
   temp.append(". ");
   temp.append($2.place);
@@ -1101,6 +1091,21 @@ Comp:            EQ
 
 Ident:      IDENT
 {
+  $$.place = strdup($1);
+  $$.code = strdup(empty);;
+};
+LocalIdent:      IDENT
+{
+  // Check for redeclaration (test 04) TODO same name as program
+  std::string variable($1);
+  if (variables.find(variable) != variables.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Redeclaration of variable %s", variable.c_str());
+    yyerror(temp);
+  }
+  else {
+    variables.insert(std::pair<std::string,int>(variable,0));
+  }
   $$.place = strdup($1);
   $$.code = strdup(empty);;
 };
