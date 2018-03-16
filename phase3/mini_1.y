@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <map>
 #include <string.h>
+#include <vector>
   void yyerror(const char* s);
   int yylex();
   extern int lineNum;
@@ -18,6 +19,9 @@
   // maps to 0 for single value
   // maps to # > 0 for array (size of array)
   std::map<std::string, int> functions;
+  std::vector<std::string> reservedWords = {"FUNCTION", "BEGIN_PARAMS", "END_PARAMS", "BEGIN_LOCALS", "END_LOCALS", "BEGIN_BODY", "END_BODY", "INTEGER",
+    "ARRAY", "OF", "IF", "THEN", "ENDIF", "ELSE", "WHILE", "DO", "FOREACH", "IN", "BEGINLOOP", "ENDLOOP", "CONTINUE", "READ", "WRITE", "AND", "OR", 
+    "NOT", "TRUE", "FALSE", "RETURN", "SUB", "ADD", "MULT", "DIV", "MOD", "EQ"};
 %}
 
 
@@ -906,14 +910,11 @@ Term:            Var
 }
 | Ident L_PAREN Expressions R_PAREN
 {
-   // Check for use of undeclared function
-  if (functions.find($1.place) == functions.end()) {
+   // Check for use of undeclared function (test 2)
+  if (functions.find(std::string($1.place)) == functions.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared function %s", $1.place);
     yyerror(temp);
-  }
-  else {
-    // TODO
   }
 
   $$.place = strdup(newTemp().c_str());
