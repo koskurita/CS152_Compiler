@@ -6,10 +6,14 @@
 #include <string.h>
   void yyerror(const char* s);
   int yylex();
+  extern int lineNum;
+  extern int lineCol;
+  extern char* yytext;
   std::string newTemp();
   std::string newLabel();
 
   char empty[1] = "";
+  unsigned int loop_depth = 0; // holds the number of loops we are inside
 
   std::map<std::string, int> variables;
   // maps to 0 for single value
@@ -120,7 +124,7 @@ Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS B
   temp.append("\n");
   temp.append($2.code);
   temp.append($5.code);
-  // TODO
+  // Parameter initalization
   std::string init_params = $5.code;
   int param_number = 0;
   while (init_params.find(".") != std::string::npos) {
@@ -133,7 +137,12 @@ Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS B
   }
   temp.append(init_params);
   temp.append($8.code);
-  temp.append($11.code);
+  std::string statements($11.code);
+  // Check if there are any leftover continues (test 09)
+  if (statements.find("continue") != std::string::npos) {
+    printf("ERROR: Continue outside loop in function %s\n", $2.place);
+  }
+  temp.append(statements);
   temp.append("endfunc\n");
   
   printf("%s", temp.c_str());
@@ -144,34 +153,39 @@ Declaration:     Identifiers COLON INTEGER
 {
   std::string vars($1.place);
   std::string temp;
+  std::string variable;
+  bool cont = true;
 
   // Build list of declarations base on list of identifiers
   // identifiers use "|" as delimeter
   size_t oldpos = 0;
   size_t pos = 0;
-  while (true) {
+  while (cont) {
     pos = vars.find("|", oldpos);
     if (pos == std::string::npos) {
       temp.append(". ");
-      temp.append(vars.substr(oldpos, pos));
-      // Check for redeclaration
-      if (variables.find(vars.substr(oldpos, pos)) != variables.end()) {
-	char temp[128];
-	snprintf(temp, 128, "Redeclaration of variable %s", vars.substr(oldpos, pos).c_str());
-	yyerror(temp);
-      }
-      else {
-	variables.insert(std::pair<std::string,int>(vars.substr(oldpos, pos),0));
-  }
+      variable = vars.substr(oldpos,pos);
+      temp.append(variable);
       temp.append("\n");
-      break;
+      cont = false;
     }
     else {
       size_t len = pos - oldpos;
       temp.append(". ");
-      temp.append(vars.substr(oldpos, len));
+      variable = vars.substr(oldpos, len);
+      temp.append(variable);
       temp.append("\n");
     }
+    // Check for redeclaration (test 04) TODO same name as program
+    if (variables.find(variable) != variables.end()) {
+      char temp[128];
+      snprintf(temp, 128, "Redeclaration of variable %s", variable.c_str());
+      yyerror(temp);
+    }
+    else {
+      variables.insert(std::pair<std::string,int>(variable,0));
+    }
+    
     oldpos = pos + 1;
   }
   
@@ -189,38 +203,43 @@ Declaration:     Identifiers COLON INTEGER
   
   std::string vars($1.place);
   std::string temp;
+  std::string variable;
+  bool cont = true;
 
   // Build list of declarations base on list of identifiers
   // identifiers use "|" as delimeter
   size_t oldpos = 0;
   size_t pos = 0;
-  while (true) {
+  while (cont) {
     pos = vars.find("|", oldpos);
     if (pos == std::string::npos) {
       temp.append(".[] ");
-      temp.append(vars.substr(oldpos, pos));
-      // Check for redeclaraion (test 04)
-      if (variables.find(vars.substr(oldpos, pos)) != variables.end()) {
-	char temp[128];
-	snprintf(temp, 128, "Redeclaration of variable %s", vars.substr(oldpos, pos).c_str());
-	yyerror(temp);
-      }
-      else {
-	variables.insert(std::pair<std::string,int>(vars.substr(oldpos, pos),1));
-      }
+      variable = vars.substr(oldpos, pos);
+      temp.append(variable);
       temp.append(", ");
       temp.append(std::to_string($5));
       temp.append("\n");
-      break;
+      cont = false;
     }
     else {
       size_t len = pos - oldpos;
       temp.append(".[] ");
-      temp.append(vars.substr(oldpos, len));
+      variable = vars.substr(oldpos, len);
+      temp.append(variable);
       temp.append(", ");
       temp.append(std::to_string($5));
       temp.append("\n");
     }
+    // Check for redeclaraion (test 04)
+    if (variables.find(variable) != variables.end()) {
+      char temp[128];
+      snprintf(temp, 128, "Redeclaration of variable %s", variable.c_str());
+      yyerror(temp);
+    }
+    else {
+      variables.insert(std::pair<std::string,int>(variable,1));
+    }
+      
     oldpos = pos + 1;
   }
   
@@ -537,13 +556,13 @@ ElseStatement:   %empty
 Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 {
   // Check for use of undeclared variable (test 01)
-  if (variables.find($1.place) == variables.end()) {
+  if (variables.find(std::string($1.place)) == variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared variable %s", $1.place);
     yyerror(temp);
   }
   // Check for use of single value as array (test 07)
-  else if (variables.at($1.place) == 0) {
+  else if (variables.at(std::string($1.place)) == 0) {
     char temp[128];
     snprintf(temp, 128, "Indexing a non-array variable %s", $1.place);
     yyerror(temp);
@@ -561,7 +580,7 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 | Ident
 {
   // Check for use of undeclared variable (test 01)
-  if (variables.find($1.place) == variables.end()) {
+  if (variables.find(std::string($1.place)) == variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared variable %s", $1.place);
     yyerror(temp);
@@ -1018,10 +1037,7 @@ Ident:      IDENT
 %%
 
 void yyerror(const char* s) {
-  extern int lineNum;
-  extern char* yytext;
-
-  printf("ERROR: %s at symbol \"%s\" on line %d\n", s, yytext, lineNum);
+   printf("ERROR: %s at symbol \"%s\" on line %d, col %d\n", s, yytext, lineNum, lineCol);
 }
 
 std::string newTemp() {
