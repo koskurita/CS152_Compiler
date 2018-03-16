@@ -27,8 +27,6 @@
 
   struct S {
     char* code;
-    char* begin;
-    char* after;
   } stat;
  }
 
@@ -264,8 +262,6 @@ Statements:      Statement SEMICOLON Statements
   temp.append($1.code);
   temp.append($3.code);
 
-  $$.begin = strdup($1.begin);
-  $$.after = strdup($3.after);
   $$.code = strdup(temp.c_str());
 }
 | Statement SEMICOLON
@@ -273,8 +269,6 @@ Statements:      Statement SEMICOLON Statements
   std::string temp;
   temp.append($1.code);
 
-  $$.begin = strdup($1.begin);
-  $$.after = strdup($1.after);
   $$.code = strdup(temp.c_str());
 };
 
@@ -311,8 +305,6 @@ Statement:      Var ASSIGN Expression
   temp.append("\n");
 
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }
 | IF BoolExp THEN Statements ElseStatement ENDIF
 {
@@ -346,8 +338,6 @@ Statement:      Var ASSIGN Expression
   temp.append("\n");
   
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }		 
 | WHILE BoolExp BEGINLOOP Statements ENDLOOP
 {
@@ -378,17 +368,16 @@ Statement:      Var ASSIGN Expression
   temp.append("\n");
   temp.append(": ");
   temp.append(beginLoop);
-  temp.append($4.begin);
   temp.append("\n");
   temp.append(statement);
-  temp.append($4.after);
+  temp.append(":= ");
+  temp.append(beginWhile);
+  temp.append("\n");
   temp.append(": ");
   temp.append(endLoop);
   temp.append("\n");
 
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }
 | DO BEGINLOOP Statements ENDLOOP WHILE BoolExp // TODO
 {
@@ -406,19 +395,10 @@ Statement:      Var ASSIGN Expression
   
   temp.append(": ");
   temp.append(beginLoop);
-  temp.append($3.begin);
   temp.append("\n");
   temp.append(statement);
-  temp.append($3.after);
-  	
-  char temp2[1] = "";
-  $$.begin = strdup(temp2);
-  $$.after = strdup(temp2);
-  $$.code = strdup(temp.c_str());
-  
   temp.append(": ");
   temp.append(beginWhile);
-
   temp.append("\n");
   temp.append($6.code);
   temp.append("?:= ");
@@ -427,10 +407,7 @@ Statement:      Var ASSIGN Expression
   temp.append($6.place);
   temp.append("\n");
   
-  $$.begin = strdup(beginWhile.c_str());
-  $$.after = strdup(empty);
   $$.code = strdup(temp.c_str());
-
 }
 | FOREACH Ident IN Ident BEGINLOOP Statements ENDLOOP
 {
@@ -496,8 +473,6 @@ Statement:      Var ASSIGN Expression
   temp.append("\n");
   
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }
 | READ Vars
 {
@@ -511,8 +486,6 @@ Statement:      Var ASSIGN Expression
   } while (true);
 
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }
 | WRITE Vars
 {
@@ -526,8 +499,6 @@ Statement:      Var ASSIGN Expression
   } while (true);
 
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }
 | CONTINUE
 {
@@ -536,8 +507,6 @@ Statement:      Var ASSIGN Expression
   // and replace with := loop check
   std::string temp = "continue\n";
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 }
 | RETURN Expression
 {
@@ -549,21 +518,15 @@ Statement:      Var ASSIGN Expression
   temp.append($2.place);
   temp.append("\n");
   $$.code = strdup(temp.c_str());
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
 };
 
 
 ElseStatement:   %empty
 {
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
   $$.code = strdup(empty);
 }
 | ELSE Statements
 {
-  $$.begin = strdup(empty);
-  $$.after = strdup(empty);
   $$.code = strdup($2.code);
 };
 
