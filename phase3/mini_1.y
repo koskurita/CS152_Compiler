@@ -45,7 +45,7 @@
 %token <ident_val> IDENT
 %token <num_val> NUMBER
 
-%type <expr> Ident LocalIdent
+%type <expr> Ident LocalIdent FunctionIdent
 %type <expr> Declarations Declaration Identifiers Var Vars
 %type <stat> Statements Statement ElseStatement
 %type <expr> Expression Expressions MultExp Term BoolExp RAExp RExp RExp1 Comp
@@ -117,17 +117,8 @@ Program:         %empty
 {
 };
 
-Function:        FUNCTION Ident SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
+Function:        FUNCTION FunctionIdent SEMICOLON BEGIN_PARAMS Declarations END_PARAMS BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY
 {
-  if (functions.find($2.place) != functions.end()) {
-    char temp[128];
-    snprintf(temp, 128, "Redeclaration of function %s", $2.place);
-    yyerror(temp);
-  }
-  else {
-    functions.insert(std::pair<std::string,int>($2.place,0));
-  }
-
   std::string temp = "func ";
   temp.append($2.place);
   temp.append("\n");
@@ -1110,6 +1101,19 @@ LocalIdent:      IDENT
   $$.place = strdup($1);
   $$.code = strdup(empty);;
 };
+FunctionIdent: IDENT
+{
+  if (functions.find(std::string($1)) != functions.end()) {
+    char temp[128];
+    snprintf(temp, 128, "Redeclaration of function %s", $1);
+    yyerror(temp);
+  }
+  else {
+    functions.insert(std::pair<std::string,int>($1,0));
+  }
+  $$.place = strdup($1);
+  $$.code = strdup(empty);;
+}
 %%
 
 void yyerror(const char* s) {
