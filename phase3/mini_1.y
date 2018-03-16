@@ -21,7 +21,9 @@
   std::map<std::string, int> functions;
   std::vector<std::string> reservedWords = {"FUNCTION", "BEGIN_PARAMS", "END_PARAMS", "BEGIN_LOCALS", "END_LOCALS", "BEGIN_BODY", "END_BODY", "INTEGER",
     "ARRAY", "OF", "IF", "THEN", "ENDIF", "ELSE", "WHILE", "DO", "FOREACH", "IN", "BEGINLOOP", "ENDLOOP", "CONTINUE", "READ", "WRITE", "AND", "OR", 
-    "NOT", "TRUE", "FALSE", "RETURN", "SUB", "ADD", "MULT", "DIV", "MOD", "EQ"};
+    "NOT", "TRUE", "FALSE", "RETURN", "SUB", "ADD", "MULT", "DIV", "MOD", "EQ", "NEQ", "LT", "GT", "LTE", "GTE", "L_PAREN", "R_PAREN", "L_SQUARE_BRACKET",
+    "R_SQUARE_BRACKET", "COLON", "SEMICOLON", "COMMA", "ASSIGN", "function", "Ident", "beginparams", "endparams", "beginlocals", "endlocals", "integer", 
+    "beginbody", "endbody", "beginloop", "endloop", "if", "endif", "foreach", "continue", "while", "else", "read", "do", "write"};
 %}
 
 
@@ -169,6 +171,7 @@ Declaration:     Identifiers COLON INTEGER
   // identifiers use "|" as delimeter
   size_t oldpos = 0;
   size_t pos = 0;
+  bool isReserved = false;
   while (cont) {
     pos = vars.find("|", oldpos);
     if (pos == std::string::npos) {
@@ -185,10 +188,21 @@ Declaration:     Identifiers COLON INTEGER
       temp.append(variable);
       temp.append("\n");
     }
+    //check for reserved keywords (test 05)
+    for (unsigned int i = 0; i < reservedWords.size(); ++i) {
+      if (reservedWords.at(i) == variable) {
+        isReserved = true;
+      }
+    } 
     // Check for redeclaration (test 04) TODO same name as program
     if (variables.find(variable) != variables.end()) {
       char temp[128];
       snprintf(temp, 128, "Redeclaration of variable %s", variable.c_str());
+      yyerror(temp);
+    }
+    else if (isReserved){
+      char temp[128];
+      snprintf(temp, 128, "Invalid declaration of reserved words %s", variable.c_str());
       yyerror(temp);
     }
     else {
