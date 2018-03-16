@@ -12,6 +12,8 @@
   char empty[1] = "";
 
   std::map<std::string, int> variables;
+  // maps to 0 for single value
+  // maps to 1 for array
   std::map<std::string, int> functions;
 %}
 
@@ -152,6 +154,15 @@ Declaration:     Identifiers COLON INTEGER
     if (pos == std::string::npos) {
       temp.append(". ");
       temp.append(vars.substr(oldpos, pos));
+      // Check for redeclaration
+      if (variables.find(vars.substr(oldpos, pos)) != variables.end()) {
+	char temp[128];
+	snprintf(temp, 128, "Redeclaration of variable %s", vars.substr(oldpos, pos).c_str());
+	yyerror(temp);
+      }
+      else {
+	variables.insert(std::pair<std::string,int>(vars.substr(oldpos, pos),0));
+  }
       temp.append("\n");
       break;
     }
@@ -181,6 +192,15 @@ Declaration:     Identifiers COLON INTEGER
     if (pos == std::string::npos) {
       temp.append(".[] ");
       temp.append(vars.substr(oldpos, pos));
+      // Check for redeclaraion
+      if (variables.find(vars.substr(oldpos, pos)) != variables.end()) {
+	char temp[128];
+	snprintf(temp, 128, "Redeclaration of variable %s", vars.substr(oldpos, pos).c_str());
+	yyerror(temp);
+      }
+      else {
+	variables.insert(std::pair<std::string,int>(vars.substr(oldpos, pos),1));
+      }
       temp.append(", ");
       temp.append(std::to_string($5));
       temp.append("\n");
@@ -216,36 +236,13 @@ Declarations:    %empty
   $$.place = strdup(empty);
 };
 
-/* Identifiers is only used by declaration; so it idents in it are
- * declarations
- */
 Identifiers:     Ident
 {
-  // Check for redeclaraion
-  if (variables.find($1.place) != variables.end()) {
-    char temp[128];
-    snprintf(temp, 128, "Redeclaration of variable %s", $1.place);
-    yyerror(temp);
-  }
-  else {
-    variables.insert(std::pair<std::string,int>($1.place,0));
-  }
-
   $$.place = strdup($1.place);
   $$.code = strdup(empty);
 }
 | Ident COMMA Identifiers
 {
-  // Check for redeclaration
-  if (variables.find($1.place) != variables.end()) {
-    char temp[128];
-    snprintf(temp, 128, "Redeclaration of variable %s", $1.place);
-    yyerror(temp);
-  }
-  else {
-    variables.insert(std::pair<std::string,int>($1.place,0));
-  }
-
   // use "|" as delimeter
   std::string temp;
   temp.append($1.place);
@@ -532,15 +529,17 @@ ElseStatement:   %empty
 
 Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 {
-  // Check for use of undeclared variable
+  // Check for use of undeclared variable (test 01)
   if (variables.find($1.place) == variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared variable %s", $1.place);
     yyerror(temp);
   }
-  else {
-    // TODO
-    //    variables.insert(std::pair<std::string,int>($1,0));
+  // Check for use of single value as array (test 07)
+  else if (variables.at($1.place) == 0) {
+    char temp[128];
+    snprintf(temp, 128, "Indexing a non-array variable %s", $1.place);
+    yyerror(temp);
   }
 
   std::string temp;
@@ -554,14 +553,17 @@ Var:             Ident L_SQUARE_BRACKET Expression R_SQUARE_BRACKET
 }
 | Ident
 {
+  // Check for use of undeclared variable (test 01)
   if (variables.find($1.place) == variables.end()) {
     char temp[128];
     snprintf(temp, 128, "Use of undeclared variable %s", $1.place);
     yyerror(temp);
   }
-  else {
-    // TODO
-    //    variables.insert(std::pair<std::string,int>($1,0));
+  // Check for use of array as single value (test 06)
+  else if (variables.at($1.place) == 1) {
+    char temp[128];
+    snprintf(temp, 128, "Failed to provide index for array variable %s", $1.place);
+    yyerror(temp);
   }
 
   $$.code = strdup(empty);
