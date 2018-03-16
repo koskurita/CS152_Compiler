@@ -5,6 +5,7 @@
   #include "mini_1.tab.h"
   
   int lineNum = 1, lineCol = 0;
+  char* progName;
 %}
 
 /* Define Patterns */
@@ -122,7 +123,8 @@ int main(int argc, char* argv[]) {
   else {
     yyin = stdin;
   }
-
+  progName = strdup(argv[1]);
+  
   //yylex();
   yyparse();
   

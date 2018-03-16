@@ -23,8 +23,6 @@ n : integer;
 endlocals
 beginbody	## main program
 		## test assignment
-		n[1] := 3;
-		n := n[1];
 		x := 5;
 
                 ## test if statement
@@ -58,8 +56,6 @@ beginbody	## main program
 		## test read and write vars
 		read x;
 		write x;
-		read x, n[1];
-		write n[1], x;
 
 		## test add and subtract
 		x := x - 1 + (x + 5);
@@ -74,13 +70,9 @@ beginbody	## main program
 		## test unary minus
 		a := -a;
 		b := -1;
-		n[1] := -n[1];
 
 		## test array access with expression
 		a := 1;
-		b := n[1-a];
-		read n[a-1];
-		write n[a-1];
 
 		## test -(expression)
 		a := -(a*a);
